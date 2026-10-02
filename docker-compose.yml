@@ -7,8 +7,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    ports:
-      - "${PORTA_DB:-8003}:5432"
+    # ports:
+    #  - "${PORTA_DB:-8003}:5432"
 
   web:
     build: .
@@ -27,8 +27,8 @@ services:
   # =========================================================
   redis:
     image: redis:7-alpine
-    ports:
-      - "${PORTA_REDIS:-8004}:6379"
+    # ports:
+    #  - "${PORTA_REDIS:-8004}:6379"
 
   celery:
     build: .
