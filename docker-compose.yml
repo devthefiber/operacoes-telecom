@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "8003:5432"
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8005:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  # =========================================================
+  # INFRAESTRUTURA ASSÍNCRONA (DESCOMENTE PARA USAR)
+  # =========================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "8004:6379"
+
+  celery:
+    build: .
+    command: celery -A core_project worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
