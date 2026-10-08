@@ -1,0 +1,528 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - Configurações</title>
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --bg: #1e272e;
+            --surface: #2f3640;
+            --text: #f5f6fa;
+            --border: #4b6584;
+            --danger: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--secondary);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 10% auto; 
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 50%;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .messages {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+    
+        .alert-box {
+            background-color: rgba(255, 107, 107, 0.2);
+            border: 2px solid var(--danger);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .alert-box h3 { margin: 0; color: var(--danger); }
+        .alert-box p { margin: 0.5rem 0 0 0; }
+</style>
+</head>
+<body>
+
+    <div class="header" style="justify-content: space-between; align-items: center; position: relative; flex-wrap: wrap;">
+        <!-- Menu Hamburger -->
+        <div style="display: flex; align-items: center;">
+            <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
+                <button class="btn" id="hamburgerBtn" style="background: var(--secondary); padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: none; color: white; border-radius: 4px;">
+                    &#9776; Menu
+                </button>
+                <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: var(--surface); min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden;">
+                    <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Painel de Gestão (Dashboard)</a>
+                    <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Gestão de Expurgos</a>
+                    <a href="{% url 'configuracoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">Configurações da Equipe</a>
+                    <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Metas Operacionais</a>
+                    <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none;">Feriados</a>
+                </div>
+            </div>
+            
+            <h1 style="margin: 0;">Configurações da Equipe ({{ mes_atual|stringformat:"02d" }}/{{ ano_atual }})</h1>
+        </div>
+
+        <form method="GET" style="display: flex; gap: 10px; align-items: flex-end; margin-top: 10px;">
+            <div>
+                <label>Mês:</label>
+                <input type="number" name="mes" value="{{ mes_atual }}" min="1" max="12" style="width: 70px; padding: 0.3rem; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: white;">
+            </div>
+            <div>
+                <label>Ano:</label>
+                <input type="number" name="ano" value="{{ ano_atual }}" min="2024" max="2100" style="width: 80px; padding: 0.3rem; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: white;">
+            </div>
+            
+            <button type="submit" class="btn">Filtrar</button>
+            {% if not tem_alocacoes %}
+            <a href="{% url 'replicar_mes_anterior' %}?mes={{ mes_atual }}&ano={{ ano_atual }}" class="btn" style="background: #f39c12; text-decoration: none;" onclick="return confirm('Deseja copiar TODA a classificação da equipe do mês passado para {{ mes_atual|stringformat:'02d' }}/{{ ano_atual }}?')">🔄 Replicar do Mês Anterior</a>
+            {% endif %}
+
+        </form>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="container" style="grid-template-columns: 1fr 1fr 1fr;">
+        <!-- Cargos do Sistema (Movido para cá para visibilidade imediata) -->
+        <div class="card">
+            <h2>
+                Cargos
+                <button class="btn" onclick="openModalCargo()">+ Novo</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in cargos %}
+                    <tr>
+                        <td>{{ c.nome }}</td>
+                        <td>
+                            <a href="#" class="btn" style="background:#f39c12; padding:0.2rem 0.5rem; font-size:0.8rem;" onclick="openEditModalCargo('{{ c.id }}', '{{ c.nome }}')">Editar</a>
+                            <a href="#" class="btn btn-danger" onclick="confirmDeleteCargo('{{ c.id }}', '{{ c.nome }}')">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">Nenhum cargo.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Supervisores -->
+        <div class="card">
+            <h2>
+                Supervisores
+                <button class="btn" onclick="openModal('SUPERVISOR')">+ Adicionar</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cargo</th>
+                        <th>Setor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sup in supervisores %}
+                    <tr>
+                        <td>{{ sup.nome|title }}</td>
+                        <td>{{ sup.cargo.nome|default:"-" }}</td>
+                        <td>{{ sup.get_setor_display|default:"-" }}</td>
+                        <td>
+                            <a href="#" class="btn" style="background:#f39c12; margin-right:5px;" onclick="openEditModal('{{ sup.id }}', 'SUPERVISOR', '{{ sup.cargo_id|default:'' }}', '{{ sup.setor|default:'' }}', '{{ sup.contratacao|default:'' }}', '', 'true')">Editar</a>
+                            <a href="#" class="btn btn-danger" onclick="confirmDelete('{{ sup.id }}', '{{ sup.nome }}')">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">Nenhum supervisor cadastrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Técnicos -->
+        <div class="card">
+            <h2>
+                Técnicos
+                <button class="btn" onclick="openModal('TECNICO')">+ Adicionar</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cargo</th>
+                        <th>Setor</th>
+                        <th>CLT/PJ</th>
+                        <th>Supervisor Atrelado</th>
+                        <th>Contabiliza Metas?</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aloc in tecnicos_alocados %}
+                <tr>
+                    <td>{{ aloc.nome }}</td>
+                    <td>{{ aloc.cargo_nome|default:"-" }}</td>
+                    <td>{{ aloc.setor|default:"-" }}</td>
+                    <td>{{ aloc.contratacao|default:"-" }}</td>
+                    <td>{{ aloc.supervisor_nome|default:"Sem Supervisor" }}</td>
+                    <td style="text-align: center;">
+                        {% if aloc.contabiliza %}
+                            <span style="color: #2ecc71;">✔️ Sim</span>
+                        {% else %}
+                            <span style="color: #e74c3c;">❌ Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn" style="background:var(--secondary); font-size:0.8rem; padding:0.2rem 0.5rem" 
+                            onclick="openEditModal('{{ aloc.id }}', '{{ aloc.tipo }}', '{{ aloc.cargo_id|default:'' }}', '{{ aloc.setor|default:'' }}', '{{ aloc.contratacao|default:'' }}', '{{ aloc.supervisor_id|default:'' }}', '{{ aloc.contabiliza|yesno:'true,false' }}')">Editar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- Modal de Cargos -->
+    <div id="modalCargo" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModalCargo()">&times;</span>
+            <h2 id="modalCargoTitle">Adicionar Cargo</h2>
+            <form method="POST" action="{% url 'salvar_cargo' %}">
+                {% csrf_token %}
+                <input type="hidden" name="cargo_id" id="modalCargoId" value="">
+                
+                <div class="form-group">
+                    <label>Nome do Cargo:</label>
+                    <input type="text" name="nome" id="modalCargoNome" required>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- The Modal Colaborador -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Adicionar Colaborador</h2>
+            <form method="POST" action="{% url 'salvar_colaborador' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" id="modalTipo" value="">
+                <input type="hidden" name="mes" value="{{ mes_atual }}">
+                <input type="hidden" name="ano" value="{{ ano_atual }}">
+
+                <div class="form-group">
+                    <label>Selecionar Funcionário (da base completa):</label>
+                    <select name="colaborador_id" required>
+                        <option value="">-- Selecione --</option>
+                        {% for colab in todos_colaboradores %}
+                            <option value="{{ colab.id }}">{{ colab.nome|title }} (Atual: {{ colab.get_tipo_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cargo:</label>
+                    <select name="cargo_id" id="modalCargoSelect" required>
+                        <option value="">-- Selecione o Cargo --</option>
+                        {% for c in cargos %}
+                            <option value="{{ c.id }}">{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Setor:</label>
+                    <select name="setor" id="modalSetor">
+                        <option value="">-- Opcional --</option>
+                        {% for value, label in setores %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Contratação (CLT ou PJ):</label>
+                    <select name="contratacao" id="modalContratacao">
+                        <option value="">-- Opcional --</option>
+                        {% for value, label in contratacoes %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="groupSupervisor" style="display:none;">
+                    <label>Atrelar a qual Supervisor?</label>
+                    <select name="supervisor_id" id="modalSupervisor">
+                        <option value="">-- Sem Supervisor --</option>
+                        {% for sup in supervisores %}
+                            <option value="{{ sup.id }}">{{ sup.nome|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="groupContabiliza" style="display:none;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="contabiliza_indicadores" id="modalContabiliza" checked style="width: 18px; height: 18px;">
+                        <strong>Contabilizar nas Metas do Supervisor?</strong> (Desmarque para Férias/Novatos)
+                    </label>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var modal = document.getElementById("myModal");
+        
+        function openModal(tipo) {
+            document.getElementById("modalTipo").value = tipo;
+            document.querySelector('select[name="colaborador_id"]').value = "";
+            document.getElementById("modalCargoSelect").value = "";
+            document.getElementById("modalSetor").value = "";
+            document.getElementById("modalContratacao").value = "";
+            document.getElementById("modalSupervisor").value = "";
+            document.getElementById("modalContabiliza").checked = true;
+
+            if(tipo === 'SUPERVISOR') {
+                document.getElementById("modalTitle").innerText = "Adicionar Supervisor";
+                document.getElementById("groupSupervisor").style.display = "none";
+                document.getElementById("groupContabiliza").style.display = "none";
+            } else {
+                document.getElementById("modalTitle").innerText = "Adicionar Técnico";
+                document.getElementById("groupSupervisor").style.display = "block";
+                document.getElementById("groupContabiliza").style.display = "block";
+            }
+            modal.style.display = "block";
+        }
+
+        function openEditModal(id, tipo, cargo, setor, contratacao, supervisor_id, contabiliza) {
+            document.getElementById("modalTipo").value = tipo;
+            document.querySelector('select[name="colaborador_id"]').value = id;
+            
+            // Lida com o Select de Cargo
+            var cargoSelect = document.getElementById("modalCargoSelect");
+            cargoSelect.value = cargo;
+
+            document.getElementById("modalSetor").value = setor;
+            document.getElementById("modalContratacao").value = contratacao;
+            document.getElementById("modalSupervisor").value = supervisor_id;
+            document.getElementById("modalContabiliza").checked = (contabiliza === 'true');
+
+            if(tipo === 'SUPERVISOR') {
+                document.getElementById("modalTitle").innerText = "Editar Supervisor";
+                document.getElementById("groupSupervisor").style.display = "none";
+                document.getElementById("groupContabiliza").style.display = "none";
+            } else {
+                document.getElementById("modalTitle").innerText = "Editar Técnico";
+                document.getElementById("groupSupervisor").style.display = "block";
+                document.getElementById("groupContabiliza").style.display = "block";
+            }
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        var modalCargoDiv = document.getElementById("modalCargo");
+        
+        function openModalCargo() {
+            document.getElementById("modalCargoId").value = "";
+            document.getElementById("modalCargoNome").value = "";
+            document.getElementById("modalCargoTitle").innerText = "Adicionar Cargo";
+            modalCargoDiv.style.display = "block";
+        }
+
+        function openEditModalCargo(id, nome) {
+            document.getElementById("modalCargoId").value = id;
+            document.getElementById("modalCargoNome").value = nome;
+            document.getElementById("modalCargoTitle").innerText = "Editar Cargo";
+            modalCargoDiv.style.display = "block";
+        }
+
+        function closeModalCargo() {
+            modalCargoDiv.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+            if (event.target == modalCargoDiv) {
+                closeModalCargo();
+            }
+        }
+
+        function confirmDeleteCargo(id, nome) {
+            if(confirm("Tem certeza que deseja excluir o cargo '" + nome + "'? Os funcionários com esse cargo ficarão sem cargo.")) {
+                window.location.href = "{% url 'excluir_cargo' 0 %}".replace("0", id);
+            }
+        }
+
+        function confirmDelete(id, nome) {
+            if(confirm("Tem certeza que deseja remover o papel de " + nome + "? Ele continuará na base de dados, mas não aparecerá no dashboard.")) {
+                window.location.href = "{% url 'excluir_papel' 0 %}".replace("0", id);
+            }
+        }
+
+        // Lógica do Menu Hamburger
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+
+        if(hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', function(event) {
+                if(menuDropdown.style.display === 'none') {
+                    menuDropdown.style.display = 'block';
+                } else {
+                    menuDropdown.style.display = 'none';
+                }
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.closest('.hamburger-container')) {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

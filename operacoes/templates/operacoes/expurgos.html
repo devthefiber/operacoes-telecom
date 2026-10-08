@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - Gestão de Expurgos</title>
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --accent: #ff9f43;
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text: #f5f6fa;
+            --text-muted: #a4b0be;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(95, 39, 205, 0.2) 0%, rgba(0, 210, 211, 0.1) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-header" style="padding: 2rem;">
+    <div>
+        <h1>Gestão de Expurgos</h1>
+        <p style="color: var(--text-muted);">Remova Ordens de Serviço (Garantia/Retrabalho) das estatísticas.</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'dashboard_operacoes' %}" class="btn-primary" style="background: rgba(255,255,255,0.1);">Voltar ao Dashboard</a>
+    </div>
+</div>
+
+<div style="padding: 2rem;">
+    <div class="kpi-card" style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem; color: var(--accent);">Registrar Novo Expurgo</h2>
+        <form method="POST" action="{% url 'registrar_expurgo' %}" style="display: flex; gap: 1rem; align-items: flex-end;">
+            {% csrf_token %}
+            <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">ID da OS no IXC</label>
+                <input type="number" name="id_ixc" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+            </div>
+            <div style="flex: 3;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Motivo / Diagnóstico do Expurgo</label>
+                <input type="text" name="motivo" required style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+            </div>
+            <div>
+                <button type="submit" class="btn-primary" style="padding: 0.8rem 2rem;">Expurgar OS</button>
+            </div>
+        </form>
+        {% if messages %}
+            {% for message in messages %}
+                <div style="margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(46, 204, 113, 0.2); border: 1px solid #2ecc71; color: #2ecc71;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="kpi-card" style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem; color: var(--accent);">Ordens de Serviço (Defeitos do Mês)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Selecione uma das OS abaixo (Garantia/Retrabalho) para registrar um expurgo rapidamente.</p>
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+            <input type="text" id="buscaCliente" placeholder="🔍 Buscar OS pelo nome do cliente..." style="flex: 2; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1rem;" onkeyup="filtrarClientes()">
+            <select id="filtroTipo" style="flex: 1; padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 1rem;" onchange="filtrarClientes()">
+                <option value="TODOS">Todos os Serviços</option>
+                <option value="ATIVACAO">Apenas Ativação</option>
+                <option value="MANUTENCAO">Apenas Manutenção</option>
+            </select>
+        </div>
+        
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 0.9rem;">
+                <thead style="position: sticky; top: 0; background: var(--bg-card);">
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 1rem;">ID IXC</th>
+                        <th style="padding: 1rem;">Cliente</th>
+                        <th style="padding: 1rem;">Assunto da OS</th>
+                        <th style="padding: 1rem;">Técnico</th>
+                        <th style="padding: 1rem;">Data Fechamento</th>
+                        <th style="padding: 1rem;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaOss">
+                    {% for os in oss_passiveis %}
+                    <tr class="os-row" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.8rem; font-weight: bold; color: var(--primary);">{{ os.id_ixc }}</td>
+                        <td style="padding: 0.8rem;">{{ os.cliente.nome }}</td>
+                        <td style="padding: 0.8rem; font-size: 0.8rem;">{{ os.assunto }}</td>
+                        <td style="padding: 0.8rem;">{{ os.colaborador.nome|default:"N/A" }}</td>
+                        <td style="padding: 0.8rem;">{{ os.data_fechamento|date:"d/m/Y" }}</td>
+                        <td style="padding: 0.8rem;">
+                            <button onclick="preencherExpurgo('{{ os.id_ixc }}')" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;">Expurgar</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">Nenhuma OS de Retrabalho ou Garantia encontrada neste mês! 🎉</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <h2 style="margin-bottom: 1rem; color: var(--primary);">Histórico de Expurgos</h2>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 1rem;">ID IXC</th>
+                    <th style="padding: 1rem;">Cliente</th>
+                    <th style="padding: 1rem;">Assunto da OS</th>
+                    <th style="padding: 1rem;">Técnico</th>
+                    <th style="padding: 1rem;">Motivo do Expurgo</th>
+                    <th style="padding: 1rem;">Data do Expurgo</th>
+                    <th style="padding: 1rem;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expurgo in expurgos %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem; font-weight: bold; color: var(--accent);">{{ expurgo.ordem_servico.id_ixc }}</td>
+                    <td style="padding: 1rem;">{{ expurgo.ordem_servico.cliente.nome }}</td>
+                    <td style="padding: 1rem;">{{ expurgo.ordem_servico.assunto }}</td>
+                    <td style="padding: 1rem;">{{ expurgo.ordem_servico.colaborador.nome|default:"N/A" }}</td>
+                    <td style="padding: 1rem;">{{ expurgo.motivo }}</td>
+                    <td style="padding: 1rem;">{{ expurgo.data_expurgo|date:"d/m/Y H:i" }}</td>
+                    <td style="padding: 1rem;">
+                        <form method="POST" action="{% url 'remover_expurgo' expurgo.id %}">
+                            {% csrf_token %}
+                            <button type="submit" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;">Desfazer</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="padding: 2rem; text-align: center; color: var(--text-muted);">Nenhum expurgo registrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function preencherExpurgo(id_ixc) {
+        const inputId = document.querySelector('input[name="id_ixc"]');
+        const inputMotivo = document.querySelector('input[name="motivo"]');
+        
+        inputId.value = id_ixc;
+        inputMotivo.focus();
+        
+        // Scroll to form
+        inputId.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function filtrarClientes() {
+        let inputCliente = document.getElementById("buscaCliente").value.toUpperCase();
+        let selectTipo = document.getElementById("filtroTipo").value;
+        let table = document.getElementById("tabelaOss");
+        let tr = table.getElementsByClassName("os-row");
+
+        for (let i = 0; i < tr.length; i++) {
+            let tdCliente = tr[i].getElementsByTagName("td")[1]; // 2nd column: Cliente
+            let tdAssunto = tr[i].getElementsByTagName("td")[2]; // 3rd column: Assunto
+            
+            if (tdCliente && tdAssunto) {
+                let txtCliente = (tdCliente.textContent || tdCliente.innerText).toUpperCase();
+                let txtAssunto = (tdAssunto.textContent || tdAssunto.innerText).toUpperCase();
+                
+                // Check name filter
+                let matchCliente = txtCliente.indexOf(inputCliente) > -1;
+                
+                // Check type filter
+                let isAtivacao = txtAssunto.includes("ATIVAÇÃO") || txtAssunto.includes("ATIVACAO") || txtAssunto.includes("24 HORAS");
+                let matchTipo = true;
+                if (selectTipo === "ATIVACAO") {
+                    matchTipo = isAtivacao;
+                } else if (selectTipo === "MANUTENCAO") {
+                    matchTipo = !isAtivacao;
+                }
+                
+                if (matchCliente && matchTipo) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }       
+        }
+    }
+</script>
+</body>
+</html>

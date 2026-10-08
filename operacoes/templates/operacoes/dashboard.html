@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Operações</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: rgba(25, 28, 41, 0.7);
+            --primary: #6c5ce7;
+            --accent: #00cec9;
+            --danger: #ff7675;
+            --text-main: #f5f6fa;
+            --text-muted: #a4b0be;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(108, 92, 231, 0.15), transparent 400px),
+                              radial-gradient(circle at bottom left, rgba(0, 206, 201, 0.1), transparent 400px);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: auto;
+            margin-left: 1rem;
+        }
+
+        /* Hamburger Menu */
+        .hamburger-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .hamburger {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .hamburger:hover {
+            color: var(--accent);
+        }
+
+        .menu-dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: var(--card-bg);
+            min-width: 250px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .menu-dropdown.show {
+            display: block;
+        }
+
+        .menu-dropdown a {
+            color: var(--text-main);
+            padding: 1rem;
+            text-decoration: none;
+            display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .menu-dropdown a:last-child {
+            border-bottom: none;
+        }
+
+        .menu-dropdown a:hover {
+            background: rgba(108, 92, 231, 0.2);
+            color: var(--accent);
+        }
+
+        .month-selector {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .kpi-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-target {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-good { background: rgba(0, 206, 201, 0.2); color: var(--accent); }
+        .status-bad { background: rgba(255, 118, 117, 0.2); color: var(--danger); }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: auto;
+            max-height: 70vh;
+            backdrop-filter: blur(12px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        th {
+            background: rgba(0,0,0,0.2);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* Sticky Header */
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        thead th {
+            /* Remove inline background clip from the header */
+            background-clip: padding-box;
+        }
+
+        /* Sticky First Column */
+        th:first-child, td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background-clip: padding-box;
+        }
+
+        /* Top Left Corner (Header + First Col) */
+        thead th:first-child {
+            z-index: 20;
+        }
+
+        /* Fundo sólido por baixo para não vazar rolagem (pois usamos cores rgba nas células) */
+        thead th::before, th:first-child::before, td:first-child::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-color);
+            z-index: -1;
+        }
+
+        .col-divider {
+            border-right: 2px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .tab-btn:hover {
+            border-color: rgba(255,255,255,0.3);
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            background: rgba(108, 92, 231, 0.2);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="hamburger-container">
+            <button class="hamburger" id="hamburgerBtn">
+                &#9776; <!-- Código HTML para ícone Hamburger -->
+            </button>
+            <div class="menu-dropdown" id="menuDropdown">
+                <a href="{% url 'dashboard_operacoes' %}">Painel de Gestão</a>
+                <a href="{% url 'gestao_expurgos' %}">Gestão de Expurgos</a>
+                <a href="{% url 'configuracoes' %}">Configurações da Equipe</a>
+                <a href="{% url 'configuracoes_metas' %}">Metas Operacionais</a>
+                <a href="{% url 'configuracoes_feriados' %}">Feriados Nacionais/Estaduais</a>
+            </div>
+        </div>
+        <h1>Dashboard theFiber</h1>
+        <form method="GET" style="display:inline-block; margin: 0;">
+            <select name="mes" class="month-selector" onchange="this.form.submit()">
+                <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro {{ano_atual}}</option>
+                <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro {{ano_atual}}</option>
+                <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março {{ano_atual}}</option>
+                <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril {{ano_atual}}</option>
+                <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio {{ano_atual}}</option>
+                <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho {{ano_atual}}</option>
+                <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho {{ano_atual}}</option>
+                <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto {{ano_atual}}</option>
+                <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro {{ano_atual}}</option>
+                <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro {{ano_atual}}</option>
+                <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro {{ano_atual}}</option>
+                <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro {{ano_atual}}</option>
+            </select>
+            <input type="hidden" name="ano" value="{{ano_atual}}">
+        </form>
+        <div style="display:inline-block; margin-left: 1rem; position: relative;">
+            <button onclick="var dropdown = document.getElementById('exportDropdown'); dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';" 
+               style="padding: 0.5rem 1rem; background: var(--primary); color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; font-size: 0.9rem;"
+               onmouseover="this.style.background='#5a4db8'" onmouseout="this.style.background='var(--primary)'">
+                📥 Exportar Relatórios ▼
+            </button>
+            <div id="exportDropdown" style="display:none; position: absolute; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); min-width: 220px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5); z-index: 100; border-radius: 6px; overflow: hidden; top: 100%; right: 0; margin-top: 5px;">
+                <div style="padding: 8px 16px; font-weight: bold; color: var(--primary); font-size: 0.75rem; text-transform: uppercase; margin-top: 5px;">Manutenção</div>
+                <a href="{% url 'exportar_base' %}?tipo=servicos&setor=manutencao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">📋 Base: Serviços e Suporte</a>
+                <a href="{% url 'exportar_base' %}?tipo=auditoria&setor=manutencao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">🔍 Base: Auditoria de Qualidade</a>
+                <a href="{% url 'exportar_base' %}?tipo=field_audit&setor=manutencao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.85rem;">🛠️ Base: Field Audit</a>
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 5px 0;"></div>
+                <div style="padding: 8px 16px; font-weight: bold; color: #e74c3c; font-size: 0.75rem; text-transform: uppercase;">Ativação</div>
+                <a href="{% url 'exportar_base' %}?tipo=ativacoes&setor=ativacao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">📋 Base: Serviços e Reincidências</a>
+                <a href="{% url 'exportar_base' %}?tipo=auditoria&setor=ativacao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">🔍 Base: Auditoria de Qualidade</a>
+                <a href="{% url 'exportar_base' %}?tipo=field_audit&setor=ativacao&mes={{mes_atual}}&ano={{ano_atual}}" style="color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.85rem;">🛠️ Base: Field Audit</a>
+            </div>
+        </div>
+    </div>
+
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <!-- Indicadores de Tempo (Dias Úteis) -->
+        <div style="display: flex; gap: 1rem; flex: 1; max-width: 700px;">
+        <div class="kpi-card" style="flex: 1; background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(46, 204, 113, 0.05)); border-color: rgba(46, 204, 113, 0.4);">
+            <div class="kpi-title" style="color: #2ecc71;">Dias Úteis (Mês)</div>
+            <div class="kpi-value">{{ dias_uteis.total_du|floatformat:1 }}</div>
+            <div class="kpi-target">Total projetado</div>
+        </div>
+
+        <div class="kpi-card" style="flex: 1; background: linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(52, 152, 219, 0.05)); border-color: rgba(52, 152, 219, 0.4);">
+            <div class="kpi-title" style="color: #3498db;">Dias Trabalhados</div>
+            <div class="kpi-value">{{ dias_uteis.trabalhados|floatformat:1 }}</div>
+            <div class="kpi-target">Utilizados no cálculo de REAL</div>
+        </div>
+
+        <div class="kpi-card" style="flex: 1; background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(231, 76, 60, 0.05)); border-color: rgba(231, 76, 60, 0.4);">
+            <div class="kpi-title" style="color: #e74c3c;">Dias Faltantes</div>
+            <div class="kpi-value">{{ dias_uteis.faltantes|floatformat:1 }}</div>
+            <div class="kpi-target">Restantes no mês</div>
+        </div>
+        </div>
+
+        <div class="tabs" style="margin-bottom: 0;">
+            <button class="tab-btn active" id="btn-manutencao" onclick="switchTab('manutencao')">Tabela de Manutenção</button>
+            <button class="tab-btn" id="btn-ativacao" onclick="switchTab('ativacao')">Tabela de Ativação</button>
+        </div>
+    </div>
+
+    <div id="table-ativacao" class="table-container" style="overflow-x: auto; max-height: 70vh; margin-bottom: 2rem; display: none;">
+        <div style="padding: 1rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 800; text-align: center; color: var(--accent);">
+            ACOMPANHAMENTO DIÁRIO DE ATIVAÇÕES
+        </div>
+        <table style="min-width: 1200px; font-size: 0.8rem;">
+            <thead>
+                <!-- Linha 1 de Cabeçalhos (Agrupamentos) -->
+                <tr>
+                    <th rowspan="2" class="col-divider" style="background: rgba(108, 92, 231, 0.3);">EQUIPE DE ATIVAÇÕES</th>
+                    <th colspan="4" class="col-divider" style="background: rgba(108, 92, 231, 0.1); text-align: center;">SERVIÇO</th>
+                    <th colspan="4" class="col-divider" style="background: rgba(0, 206, 201, 0.1); text-align: center;">SUPORTE (Reincidência)</th>
+                    <th colspan="8" class="col-divider" style="background: rgba(255, 118, 117, 0.1); text-align: center;">AUDITORIA</th>
+                    <th colspan="2" class="col-divider" style="background: rgba(230, 126, 34, 0.2); text-align: center;">FISC. AUD</th>
+                </tr>
+                <!-- Linha 2 de Cabeçalhos (Métricas) -->
+                <tr>
+                    <!-- SERVIÇO -->
+                    <th>TOTAL</th>
+                    <th>META</th>
+                    <th>REAL</th>
+                    <th class="col-divider">% ATING.</th>
+                    
+                    <!-- SUPORTE -->
+                    <th>SUP.</th>
+                    <th>META</th>
+                    <th>% <=30D</th>
+                    <th class="col-divider">% ATING.</th>
+
+                    <!-- AUDITORIA -->
+                    <th>AUD. SUP</th>
+                    <th>% AUD</th>
+                    <th>APROV.</th>
+                    <th>REP.</th>
+                    <th>META</th>
+                    <th>REAL</th>
+                    <th>REAL EQU.</th>
+                    <th class="col-divider">% ATING.</th>
+                    
+                    <!-- FISC. AUD -->
+                    <th>APROV.</th>
+                    <th class="col-divider">REP.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equipe in equipes_ativacao %}
+                <!-- Supervisor (Linha Agrupadora) -->
+                <tr style="background: rgba(108, 92, 231, 0.2); font-weight: bold;">
+                    <td class="col-divider">{{ equipe.nome|upper }}</td>
+                    <td>{{ equipe.total_servicos }}</td>
+                    <td>{{ meta.ativacao_meta_volume|floatformat:1 }}</td>
+                    <td>{{ equipe.real_dia_medio|floatformat:1 }}</td>
+                    <td class="col-divider">{{ equipe.pct_ating_medio|floatformat:0 }}%</td>
+                    
+                    <td>{{ equipe.total_reinc }}</td>
+                    <td>{{ meta.ativacao_meta_reincidencia|floatformat:1 }}%</td>
+                    <td>{{ equipe.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">{{ equipe.pct_ating_reinc|floatformat:0 }}%</td>
+                    <td>{{ equipe.total_auditorias }}</td>
+                    <td>{{ equipe.pct_fisc|floatformat:0 }}%</td>
+                    <td>{{ equipe.total_aprov|default:0 }}</td>
+                    <td>{{ equipe.total_reprov }}</td>
+                    <td>{{ meta.ativacao_meta_auditoria|floatformat:1 }}</td>
+                    <td>{{ equipe.real_aud|floatformat:1 }}</td>
+                    <td>{{ equipe.real_aud|floatformat:1 }}</td>
+                    <td class="col-divider">{{ equipe.pct_ating_aud|floatformat:0 }}%</td>
+                    
+                    <td style="color: #e67e22; font-weight: bold;">{{ equipe.total_fisc_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22; font-weight: bold;">{{ equipe.total_fisc_reprov|default:0 }}</td>
+                </tr>
+                <!-- Técnicos -->
+                {% for tecnico in equipe.tecnicos %}
+                <tr>
+                    <td class="col-divider" style="padding-left: 2rem;">
+                        {{ tecnico.nome|upper }}
+                        {% if not tecnico.contabiliza %}
+                            <span style="font-size: 0.7rem; color: #e74c3c; margin-left: 8px;" title="Técnico não soma nos totais da equipe (Férias/Novato)">🚫 Não Contabiliza</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ tecnico.servicos }}</td>
+                    <td>{{ meta.ativacao_meta_volume|floatformat:1 }}</td>
+                    <td>{{ tecnico.real_dia|floatformat:1 }}</td>
+                    <td class="col-divider">{{ tecnico.pct_ating|floatformat:0 }}%</td>
+                    
+                    <td>{{ tecnico.reincidencias }}</td>
+                    <td>{{ meta.ativacao_meta_reincidencia|floatformat:1 }}%</td>
+                    <td>{{ tecnico.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">
+                        {{ tecnico.pct_ating_reinc|floatformat:0 }}%
+                        {% if tecnico.pct_reinc <= meta.ativacao_meta_reincidencia %}
+                            <span class="status-badge status-good">OK</span>
+                        {% else %}
+                            <span class="status-badge status-bad">ACIMA</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ tecnico.auditorias }}</td>
+                    <td>{{ tecnico.pct_fisc|floatformat:0 }}%</td>
+                    <td>{{ tecnico.aprovadas }}</td>
+                    <td>{{ tecnico.reprovadas }}</td>
+                    <td style="color: rgba(255,255,255,0.2);">-</td>
+                    <td>{{ tecnico.real_aud|floatformat:1 }}</td>
+                    <td style="color: rgba(255,255,255,0.2);">-</td>
+                    <td class="col-divider" style="color: rgba(255,255,255,0.2);">-</td>
+                    
+                    <td style="color: #e67e22;">{{ tecnico.fisc_aud_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22;">{{ tecnico.fisc_aud_reprov|default:0 }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="spacer-row"><td colspan="20" style="background: transparent !important; border: none !important; height: 15px;"></td></tr>
+                {% empty %}
+                <tr>
+                    <td colspan="19" style="text-align: center; padding: 2rem;">Nenhuma equipe cadastrada com serviço neste mês.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: rgba(0, 0, 0, 0.5); font-weight: 900; color: var(--accent); font-size: 0.9rem;">
+                    <td class="col-divider">TOTAL GERAL (ATIVAÇÃO)</td>
+                    <td>{{ total_ativacao.servicos }}</td>
+                    <td>{{ meta.ativacao_meta_volume|floatformat:1 }}</td>
+                    <td>{{ total_ativacao.real_medio|floatformat:1 }}</td>
+                    <td class="col-divider">{{ total_ativacao.pct_ating|floatformat:0 }}%</td>
+                    
+                    <td>{{ total_ativacao.reinc }}</td>
+                    <td>{{ meta.ativacao_meta_reincidencia|floatformat:1 }}%</td>
+                    <td>{{ total_ativacao.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">{{ total_ativacao.pct_ating_reinc|floatformat:0 }}%</td>
+                    <td>{{ total_ativacao.auditorias }}</td>
+                    <td>{{ total_ativacao.pct_fisc|floatformat:0 }}%</td>
+                    <td>{{ total_ativacao.aprov }}</td>
+                    <td>{{ total_ativacao.reprov }}</td>
+                    <td>{{ meta.ativacao_meta_auditoria|floatformat:1 }}</td>
+                    <td>{{ total_ativacao.real_aud|floatformat:1 }}</td>
+                    <td>{{ total_ativacao.real_aud|floatformat:1 }}</td>
+                    <td class="col-divider">{{ total_ativacao.pct_ating_aud|floatformat:0 }}%</td>
+                    
+                    <td style="color: #e67e22; font-weight: bold;">{{ total_ativacao.fisc_aud_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22; font-weight: bold;">{{ total_ativacao.fisc_aud_reprov|default:0 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Tabela Manutenção (Mesmo conceito) -->
+    <div id="table-manutencao" class="table-container" style="overflow-x: auto; max-height: 70vh;">
+        <div style="padding: 1rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 800; text-align: center; color: var(--primary);">
+            ACOMPANHAMENTO DIÁRIO DE MANUTENÇÃO
+        </div>
+        <table style="min-width: 1200px; font-size: 0.8rem;">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-divider" style="background: rgba(108, 92, 231, 0.3);">EQUIPE</th>
+                    <th colspan="7" class="col-divider" style="background: rgba(108, 92, 231, 0.1); text-align: center;">VOLUME</th>
+                    <th colspan="4" class="col-divider" style="background: rgba(155, 89, 182, 0.1); text-align: center;">RETRABALHO</th>
+                    <th colspan="3" class="col-divider" style="background: rgba(241, 196, 15, 0.1); text-align: center; color: #f1c40f;">GART. 30D</th>
+                    <th colspan="8" class="col-divider" style="background: rgba(255, 118, 117, 0.1); text-align: center;">AUDITORIA</th>
+                    <th colspan="2" class="col-divider" style="background: rgba(230, 126, 34, 0.2); text-align: center;">FISC. AUD</th>
+                    <th colspan="2" class="col-divider" style="background: rgba(52, 152, 219, 0.2); text-align: center;">RESULTADO TÉCNICO</th>
+                    <th rowspan="2" style="background: rgba(52, 152, 219, 0.4); text-align: center;">NOTA FINAL</th>
+                </tr>
+                <tr>
+                    <th>SUPORTE</th><th>SERVIÇO</th><th>POTÊNCIA</th><th>TOTAL</th><th>META</th><th>REAL</th><th class="col-divider">% ATING.</th>
+                    <th>RETRAB.</th><th>META</th><th>% REAL</th><th class="col-divider">% ATING.</th>
+                    <th>GART</th><th>META</th><th class="col-divider">% REAL</th>
+                    <th>AUD. SUP</th><th>% FISC.</th><th>APROV.</th><th>REP.</th><th>META</th><th>% REAL</th><th>REAL</th><th class="col-divider">% ATING.</th>
+                    <th>APROV.</th><th class="col-divider">REP.</th>
+                    <th style="color: #3498db;">80%</th><th class="col-divider" style="color: #e74c3c;">20%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equipe in equipes_manutencao %}
+                <tr style="{% if 'TOTAL RAFAEL' in equipe.nome %}background: rgba(0, 0, 0, 0.5); color: var(--primary); font-size: 0.9rem;{% else %}background: rgba(108, 92, 231, 0.2);{% endif %} font-weight: bold;">
+                    <td class="col-divider">{{ equipe.nome|upper }}</td>
+                    <td>{{ equipe.total_suporte }}</td> <!-- SUPORTE -->
+                    <td>{{ equipe.total_servicos }}</td> <!-- SERVICO -->
+                    <td>0</td> <!-- POTENCIA -->
+                    <td>{{ equipe.total_volume }}</td> <!-- TOTAL -->
+                    <td>{{ meta.manutencao_meta_volume|floatformat:1 }}</td> <!-- META EQUIPE -->
+                    <td>{{ equipe.real_dia_medio|floatformat:1 }}</td> <!-- REAL EQUIPE -->
+                    <td class="col-divider">{{ equipe.pct_ating_medio|floatformat:0 }}%</td> <!-- PCT EQUIPE -->
+                    
+                    <td>{{ equipe.total_reinc }}</td> <!-- RETRAB -->
+                    <td>{{ meta.manutencao_meta_retrabalho|floatformat:1 }}%</td> <!-- META RETRAB -->
+                    <td>{{ equipe.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">{{ equipe.pct_ating_reinc|floatformat:0 }}%</td>
+                    
+                    <td>{{ equipe.total_gart }}</td> <!-- GART -->
+                    <td>{{ meta.manutencao_meta_garantia_30d|floatformat:1 }}%</td> <!-- META GART -->
+                    <td class="col-divider">{{ equipe.pct_gart|floatformat:1 }}%</td>
+
+                    <td>{{ equipe.total_auditorias }}</td> <!-- AUD -->
+                    <td>{{ equipe.pct_fisc|floatformat:0 }}%</td> <!-- % FISC. -->
+                    <td>{{ equipe.total_aprov|default:0 }}</td>
+                    <td>{{ equipe.total_reprov }}</td>
+                    <td>{{ meta.manutencao_meta_auditoria|floatformat:1 }}</td> <!-- META AUD -->
+                    <td>{{ equipe.real_aud|floatformat:1 }}</td> <!-- % REAL AUD. -->
+                    <td>{{ equipe.real_aud|floatformat:1 }}</td> <!-- REAL AUD. -->
+                    <td class="col-divider">{{ equipe.pct_ating_aud|floatformat:0 }}%</td> <!-- % ATING AUD. -->
+                    
+                    <td style="color: #e67e22; font-weight: bold;">{{ equipe.total_fisc_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22; font-weight: bold;">{{ equipe.total_fisc_reprov|default:0 }}</td>
+                    
+                    <td>{{ equipe.res_tecnico_vol|floatformat:0 }}%</td>
+                    <td class="col-divider">{{ equipe.res_tecnico_ret|floatformat:0 }}%</td>
+                    <td style="background: rgba(52, 152, 219, 0.1); font-weight: bold; color: #3498db;">{{ equipe.resultado_tecnico|floatformat:0 }}%</td>
+                </tr>
+                {% for tecnico in equipe.tecnicos %}
+                <tr>
+                    <td class="col-divider" style="padding-left: 2rem;">
+                        {{ tecnico.nome|upper }}
+                        {% if not tecnico.contabiliza %}
+                            <span style="font-size: 0.7rem; color: #e74c3c; margin-left: 8px;" title="Técnico não soma nos totais da equipe (Férias/Novato)">🚫 Não Contabiliza</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ tecnico.suporte }}</td> <!-- SUPORTE -->
+                    <td>{{ tecnico.servicos }}</td> <!-- SERVICO -->
+                    <td>0</td> <!-- POTENCIA -->
+                    <td>{{ tecnico.total_volume }}</td> <!-- TOTAL -->
+                    <td>{{ meta.manutencao_meta_volume|floatformat:1 }}</td>
+                    <td>{{ tecnico.real_dia|floatformat:1 }}</td>
+                    <td class="col-divider">{{ tecnico.pct_ating|floatformat:0 }}%</td>
+                    
+                    <td>{{ tecnico.reincidencias }}</td> <!-- RETRAB -->
+                    <td>{{ meta.manutencao_meta_retrabalho|floatformat:1 }}%</td> <!-- META RETRAB -->
+                    <td>{{ tecnico.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">
+                        {{ tecnico.pct_ating_reinc|floatformat:0 }}%
+                        {% if tecnico.pct_reinc <= meta.manutencao_meta_retrabalho %}
+                            <span class="status-badge status-good">OK</span>
+                        {% else %}
+                            <span class="status-badge status-bad">ACIMA</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>{{ tecnico.garantia_30d }}</td> <!-- GART -->
+                    <td>{{ meta.manutencao_meta_garantia_30d|floatformat:1 }}%</td> <!-- META GART -->
+                    <td class="col-divider">{{ tecnico.pct_gart|floatformat:1 }}%</td>
+
+                    <td>{{ tecnico.auditorias }}</td> <!-- AUD -->
+                    <td>{{ tecnico.pct_fisc|floatformat:0 }}%</td> <!-- % FISC. -->
+                    <td>{{ tecnico.aprovadas }}</td>
+                    <td>{{ tecnico.reprovadas }}</td>
+                    <td>-</td> <!-- META AUD -->
+                    <td>{{ tecnico.real_aud|floatformat:1 }}</td> <!-- % REAL AUD. -->
+                    <td>{{ tecnico.real_aud|floatformat:1 }}</td> <!-- REAL AUD. -->
+                    <td class="col-divider">-</td> <!-- % ATING AUD. -->
+                    
+                    <td style="color: #e67e22;">{{ tecnico.fisc_aud_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22;">{{ tecnico.fisc_aud_reprov|default:0 }}</td>
+                    
+                    <td>{{ tecnico.res_tecnico_vol|floatformat:0 }}%</td>
+                    <td class="col-divider">{{ tecnico.res_tecnico_ret|floatformat:0 }}%</td>
+                    <td style="background: rgba(52, 152, 219, 0.05); font-weight: bold;">
+                        {% if tecnico.resultado_tecnico >= 100 %}
+                            <span class="status-badge status-good">{{ tecnico.resultado_tecnico|floatformat:0 }}%</span>
+                        {% else %}
+                            <span class="status-badge status-bad">{{ tecnico.resultado_tecnico|floatformat:0 }}%</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr class="spacer-row"><td colspan="20" style="background: transparent !important; border: none !important; height: 15px;"></td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: rgba(0, 0, 0, 0.5); font-weight: 900; color: var(--primary); font-size: 0.9rem;">
+                    <td class="col-divider">TOTAL GERAL (MANUTENÇÃO)</td>
+                    <td>{{ total_manutencao.suporte }}</td> <!-- SUPORTE -->
+                    <td>{{ total_manutencao.servicos }}</td> <!-- SERVICO -->
+                    <td>0</td> <!-- POTENCIA -->
+                    <td>{{ total_manutencao.volume }}</td> <!-- TOTAL -->
+                    <td>{{ meta.manutencao_meta_volume|floatformat:1 }}</td> <!-- META GERAL -->
+                    <td>{{ total_manutencao.real_medio|floatformat:1 }}</td> <!-- REAL GERAL -->
+                    <td class="col-divider">{{ total_manutencao.pct_ating|floatformat:0 }}%</td> <!-- PCT GERAL -->
+                    
+                    <td>{{ total_manutencao.reinc }}</td> <!-- RETRAB -->
+                    <td>{{ meta.manutencao_meta_retrabalho|floatformat:1 }}%</td> <!-- META RETRAB -->
+                    <td>{{ total_manutencao.pct_reinc|floatformat:1 }}%</td>
+                    <td class="col-divider">{{ total_manutencao.pct_ating_reinc|floatformat:0 }}%</td>
+                    
+                    <td>{{ total_manutencao.gart }}</td> <!-- GART -->
+                    <td>{{ meta.manutencao_meta_garantia_30d|floatformat:1 }}%</td> <!-- META GART -->
+                    <td class="col-divider">{{ total_manutencao.pct_gart|floatformat:1 }}%</td>
+
+                    <td>{{ total_manutencao.auditorias }}</td> <!-- AUD -->
+                    <td>{{ total_manutencao.pct_fisc|floatformat:0 }}%</td> <!-- % FISC. -->
+                    <td>{{ total_manutencao.aprov }}</td>
+                    <td>{{ total_manutencao.reprov }}</td>
+                    <td>{{ meta.manutencao_meta_auditoria|floatformat:1 }}</td> <!-- META AUD -->
+                    <td>{{ total_manutencao.pct_real_aud|floatformat:1 }}</td> <!-- % REAL AUD. -->
+                    <td>{{ total_manutencao.real_aud|floatformat:1 }}</td> <!-- REAL AUD. -->
+                    <td class="col-divider">{{ total_manutencao.pct_ating_aud|floatformat:0 }}%</td> <!-- % ATING AUD. -->
+                    
+                    <td style="color: #e67e22; font-weight: bold;">{{ total_manutencao.fisc_aud_aprov|default:0 }}</td>
+                    <td class="col-divider" style="color: #e67e22; font-weight: bold;">{{ total_manutencao.fisc_aud_reprov|default:0 }}</td>
+                    
+                    <td>{{ total_manutencao.res_tecnico_vol|floatformat:0 }}%</td>
+                    <td class="col-divider">{{ total_manutencao.res_tecnico_ret|floatformat:0 }}%</td>
+                    <td style="background: rgba(52, 152, 219, 0.3); font-weight: bold; color: #fff;">{{ total_manutencao.resultado_tecnico|floatformat:0 }}%</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        // Lógica do Menu Hamburger
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+
+        hamburgerBtn.addEventListener('click', function(event) {
+            menuDropdown.classList.toggle('show');
+            event.stopPropagation(); // Impede o clique de fechar imediatamente
+        });
+
+        // Fechar o menu se clicar em qualquer lugar fora dele
+        window.addEventListener('click', function(event) {
+            if (!event.target.matches('.hamburger') && !event.target.matches('.hamburger *')) {
+                if (menuDropdown.classList.contains('show')) {
+                    menuDropdown.classList.remove('show');
+                }
+            }
+        });
+
+        // Lógica das Abas (Tabs)
+        function switchTab(tabName) {
+            // Esconder todas as tabelas
+            document.getElementById('table-manutencao').style.display = 'none';
+            document.getElementById('table-ativacao').style.display = 'none';
+            
+            // Remover classe active de todos os botões
+            document.getElementById('btn-manutencao').classList.remove('active');
+            document.getElementById('btn-ativacao').classList.remove('active');
+            
+            // Mostrar a tabela clicada e ativar o botão
+            document.getElementById('table-' + tabName).style.display = 'block';
+            document.getElementById('btn-' + tabName).classList.add('active');
+        }
+    </script>
+</body>
+</html>

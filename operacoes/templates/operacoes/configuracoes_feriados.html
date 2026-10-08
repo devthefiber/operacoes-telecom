@@ -1,0 +1,330 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - Metas Operacionais</title>
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --bg: #1e272e;
+            --surface: #2f3640;
+            --text: #f5f6fa;
+            --border: #4b6584;
+            --danger: #ff6b6b;
+            --warning: #f39c12;
+            --success: #1dd1a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--secondary);
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 70%;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-section {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .form-section h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .messages {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .badge-ativacao {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .badge-manutencao {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" style="justify-content: flex-start; align-items: center; position: relative;">
+        <!-- Menu Hamburger -->
+        <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
+            <button class="btn" id="hamburgerBtn" style="background: var(--secondary); padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: none; color: white; border-radius: 4px;">
+                &#9776; Menu
+            </button>
+            <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: var(--surface); min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden;">
+                <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Painel de Gestão (Dashboard)</a>
+                <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Gestão de Expurgos</a>
+                <a href="{% url 'configuracoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Configurações da Equipe</a>
+                <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Metas Operacionais</a>
+                <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; background: rgba(255,255,255,0.05);">Feriados</a>
+            </div>
+        </div>
+        
+        <h1 style="margin: 0;">Configurações de Feriados</h1>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="container" style="grid-template-columns: 1fr;">
+
+        <div class="card">
+            <h2 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                Feriados Cadastrados
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <form method="GET" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <label style="font-size: 0.9rem; font-weight: normal;">Filtrar Ano:</label>
+                        <select name="ano" onchange="this.form.submit()" style="padding: 0.4rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+                            {% for a in anos_disponiveis %}
+                                <option value="{{ a }}" {% if a == ano_selecionado %}selected{% endif %}>{{ a }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <button class="btn" onclick="openModalFeriado()">+ Novo Feriado</button>
+                </div>
+            </h2>
+            <p style="font-size: 0.8rem; color: #aaa; margin-top: 0;">Dias Úteis consideram: Seg-Sex (1.0), Sáb (0.5), Dom/Feriados (0.0).</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in feriados %}
+                    <tr>
+                        <td>{{ f.data|date:"d/m/Y" }}</td>
+                        <td>{{ f.descricao }}</td>
+                        <td>
+                            <a href="#" class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="confirmDeleteFeriado('{{ f.id }}', '{{ f.descricao }}')">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">Nenhum feriado cadastrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+    <!-- Modal Feriado -->
+    <div id="modalFeriado" class="modal">
+        <div class="modal-content" style="width: 40%;">
+            <span class="close" onclick="closeModalFeriado()">&times;</span>
+            <h2 id="modalFeriadoTitle">Cadastrar Feriado</h2>
+            <form method="POST" action="{% url 'salvar_feriado' %}">
+                {% csrf_token %}
+                <input type="hidden" name="feriado_id" id="modalFeriadoId" value="">
+                
+                <div class="form-group">
+                    <label>Data:</label>
+                    <input type="date" name="data" id="modalFeriadoData" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição (Ex: Feriado Nacional, Estadual Goiás, etc):</label>
+                    <input type="text" name="descricao" id="modalFeriadoDescricao" required>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var modalFeriadoDiv = document.getElementById("modalFeriado");
+
+        function openModalFeriado() {
+            document.getElementById("modalFeriadoId").value = "";
+            document.getElementById("modalFeriadoData").value = "";
+            document.getElementById("modalFeriadoDescricao").value = "";
+            modalFeriadoDiv.style.display = "block";
+        }
+
+        function closeModalFeriado() {
+            modalFeriadoDiv.style.display = "none";
+        }
+
+        function confirmDeleteFeriado(id, descricao) {
+            if(confirm("Tem certeza que deseja excluir o feriado '" + descricao + "'? Os dias úteis serão recalculados.")) {
+                window.location.href = "{% url 'excluir_feriado' 0 %}".replace("0", id);
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modalFeriadoDiv) {
+                closeModalFeriado();
+            }
+        }
+
+        // Lógica do Menu Hamburger
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+
+        if(hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', function(event) {
+                if(menuDropdown.style.display === 'none') {
+                    menuDropdown.style.display = 'block';
+                } else {
+                    menuDropdown.style.display = 'none';
+                }
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.closest('.hamburger-container')) {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

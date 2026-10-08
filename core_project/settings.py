@@ -84,6 +84,14 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
+    },
+    'dw': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DW_DB', 'db_thefiber'),
+        'USER': os.getenv('POSTGRES_DW_USER', 'thefiber'),
+        'PASSWORD': os.getenv('POSTGRES_DW_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_DW_HOST', 'host.docker.internal'),
+        'PORT': os.getenv('POSTGRES_DW_PORT', '5432'),
     }
 }
 

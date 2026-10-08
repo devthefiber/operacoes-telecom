@@ -1,0 +1,413 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - Metas Operacionais</title>
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --bg: #1e272e;
+            --surface: #2f3640;
+            --text: #f5f6fa;
+            --border: #4b6584;
+            --danger: #ff6b6b;
+            --warning: #f39c12;
+            --success: #1dd1a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--secondary);
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 70%;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-section {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .form-section h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .messages {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .badge-ativacao {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .badge-manutencao {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" style="justify-content: flex-start; align-items: center; position: relative;">
+        <!-- Menu Hamburger -->
+        <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
+            <button class="btn" id="hamburgerBtn" style="background: var(--secondary); padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: none; color: white; border-radius: 4px;">
+                &#9776; Menu
+            </button>
+            <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: var(--surface); min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden;">
+                <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Painel de Gestão (Dashboard)</a>
+                <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Gestão de Expurgos</a>
+                <a href="{% url 'configuracoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Configurações da Equipe</a>
+                <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">Metas Operacionais</a>
+                <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none;">Feriados</a>
+            </div>
+        </div>
+        
+        <h1 style="margin: 0;">Configurações de Metas Operacionais</h1>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="container" style="grid-template-columns: 1fr;">
+        <div class="card">
+            <h2>
+                Histórico de Metas por Mês
+                <button class="btn" onclick="openModal()">+ Nova Meta</button>
+            </h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">Mês/Ano</th>
+                        <th rowspan="2">Dias Úteis<br><small>(Dinâmico)</small></th>
+                        <th colspan="3" style="text-align: center; border-left: 1px solid var(--border);">Ativação</th>
+                        <th colspan="4" style="text-align: center; border-left: 1px solid var(--border);">Manutenção</th>
+                        <th rowspan="2" style="border-left: 1px solid var(--border);">Ações</th>
+                    </tr>
+                    <tr>
+                        <th style="border-left: 1px solid var(--border);">Volume</th>
+                        <th>Reincidência</th>
+                        <th>Auditoria</th>
+                        
+                        <th style="border-left: 1px solid var(--border);">Volume</th>
+                        <th>Retrabalho</th>
+                        <th>Gar. 30d</th>
+                        <th>Auditoria</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in metas %}
+                    <tr>
+                        <td><strong>{{ m.get_mes_display }}/{{ m.ano }}</strong></td>
+                        <td style="text-align: center; font-weight: bold; color: var(--success);">{{ m.dias_uteis_calculado }}</td>
+                        
+                        <!-- Ativação -->
+                        <td style="border-left: 1px solid var(--border);"><span class="badge-ativacao">{{ m.ativacao_meta_volume }}</span></td>
+                        <td><span class="badge-ativacao">{{ m.ativacao_meta_reincidencia }}%</span></td>
+                        <td><span class="badge-ativacao">{{ m.ativacao_meta_auditoria }}%</span></td>
+                        
+                        <!-- Manutenção -->
+                        <td style="border-left: 1px solid var(--border);"><span class="badge-manutencao">{{ m.manutencao_meta_volume }}</span></td>
+                        <td><span class="badge-manutencao">{{ m.manutencao_meta_retrabalho }}%</span></td>
+                        <td><span class="badge-manutencao">{{ m.manutencao_meta_garantia_30d }}%</span></td>
+                        <td><span class="badge-manutencao">{{ m.manutencao_meta_auditoria }}%</span></td>
+                        
+                        <td style="border-left: 1px solid var(--border);">
+                            <a href="#" class="btn" style="background:var(--warning);" onclick="openEditModal('{{ m.id }}', '{{ m.ano }}', '{{ m.mes }}', '{{ m.ativacao_meta_volume|stringformat:"s" }}', '{{ m.ativacao_meta_reincidencia|stringformat:"s" }}', '{{ m.ativacao_meta_auditoria|stringformat:"s" }}', '{{ m.manutencao_meta_volume|stringformat:"s" }}', '{{ m.manutencao_meta_retrabalho|stringformat:"s" }}', '{{ m.manutencao_meta_garantia_30d|stringformat:"s" }}', '{{ m.manutencao_meta_auditoria|stringformat:"s" }}')">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10">Nenhuma meta cadastrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Cadastrar Metas do Mês</h2>
+            <form method="POST" action="{% url 'salvar_meta' %}">
+                {% csrf_token %}
+                <input type="hidden" name="meta_id" id="modalMetaId" value="">
+
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Mês:</label>
+                        <select name="mes" id="modalMes" required>
+                            {% for value, label in meses %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Ano:</label>
+                        <input type="number" name="ano" id="modalAno" value="2026" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Seção Ativação -->
+                    <div class="form-section">
+                        <h3>Ativação</h3>
+                        <div class="form-group">
+                            <label>Meta de Volume:</label>
+                            <input type="number" step="0.01" name="ativacao_meta_volume" id="a_vol" value="6.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta de Reincidência (%):</label>
+                            <input type="number" step="0.01" name="ativacao_meta_reincidencia" id="a_reinc" value="5.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta de Auditoria (%):</label>
+                            <input type="number" step="0.01" name="ativacao_meta_auditoria" id="a_aud" value="6.00" required>
+                        </div>
+                    </div>
+
+                    <!-- Seção Manutenção -->
+                    <div class="form-section">
+                        <h3>Manutenção</h3>
+                        <div class="form-group">
+                            <label>Meta de Volume:</label>
+                            <input type="number" step="0.01" name="manutencao_meta_volume" id="m_vol" value="6.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta de Retrabalho (%):</label>
+                            <input type="number" step="0.01" name="manutencao_meta_retrabalho" id="m_ret" value="4.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta Garantia 30d (%):</label>
+                            <input type="number" step="0.01" name="manutencao_meta_garantia_30d" id="m_gar" value="5.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Meta de Auditoria (%):</label>
+                            <input type="number" step="0.01" name="manutencao_meta_auditoria" id="m_aud" value="6.00" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1.5rem; padding: 1rem; font-size: 1.1rem;">Salvar Metas</button>
+            </form>
+        </div>
+    </div>
+
+
+
+    <script>
+        var modal = document.getElementById("myModal");
+        
+        function openModal() {
+            document.getElementById("modalTitle").innerText = "Cadastrar Metas do Mês";
+            document.getElementById("modalMetaId").value = "";
+            document.getElementById("modalMes").value = new Date().getMonth() + 1; // Mês atual
+            document.getElementById("modalAno").value = new Date().getFullYear();
+            
+            // Valores Default
+            document.getElementById("a_vol").value = "6.00";
+            document.getElementById("a_reinc").value = "5.00";
+            document.getElementById("a_aud").value = "6.00";
+            document.getElementById("m_vol").value = "6.00";
+            document.getElementById("m_ret").value = "4.00";
+            document.getElementById("m_gar").value = "4.00";
+            document.getElementById("m_aud").value = "6.00";
+
+            modal.style.display = "block";
+        }
+
+        function openEditModal(id, ano, mes, a_vol, a_reinc, a_aud, m_vol, m_ret, m_gar, m_aud) {
+            document.getElementById("modalTitle").innerText = "Editar Metas do Mês";
+            document.getElementById("modalMetaId").value = id;
+            document.getElementById("modalAno").value = ano;
+            document.getElementById("modalMes").value = mes;
+            
+            document.getElementById("a_vol").value = a_vol.replace(',', '.');
+            document.getElementById("a_reinc").value = a_reinc.replace(',', '.');
+            document.getElementById("a_aud").value = a_aud.replace(',', '.');
+            
+            document.getElementById("m_vol").value = m_vol.replace(',', '.');
+            document.getElementById("m_ret").value = m_ret.replace(',', '.');
+            document.getElementById("m_gar").value = m_gar.replace(',', '.');
+            document.getElementById("m_aud").value = m_aud.replace(',', '.');
+
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Lógica do Menu Hamburger
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+
+        if(hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', function(event) {
+                if(menuDropdown.style.display === 'none') {
+                    menuDropdown.style.display = 'block';
+                } else {
+                    menuDropdown.style.display = 'none';
+                }
+                event.stopPropagation();
+            });
+
+            window.addEventListener('click', function(event) {
+                if (!event.target.closest('.hamburger-container')) {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
