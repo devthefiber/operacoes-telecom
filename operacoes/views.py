@@ -137,6 +137,15 @@ def dashboard_operacoes(request):
     # Busca todos os técnicos que têm supervisor definido
     alocacoes = AlocacaoMensal.objects.filter(mes=mes_atual, ano=ano_atual, colaborador__tipo='TECNICO').exclude(supervisor__isnull=True).select_related('colaborador', 'supervisor')
 
+    def calc_ating_reinc(real_pct, meta_val, is_ativacao=False):
+        if not meta_val: return 0.0
+        if real_pct <= 0:
+            return 0.0 if is_ativacao else 400.0
+        ating = (float(meta_val) / real_pct) * 100
+        if not is_ativacao:
+            return 400.0 if ating > 400.0 else ating
+        return ating
+
     for aloc in alocacoes:
         tecnico = aloc.colaborador
         setor = aloc.supervisor.setor if aloc.supervisor else 'MANUTENCAO'
@@ -239,15 +248,6 @@ def dashboard_operacoes(request):
             
         pct_reinc = (float(t_reinc) / float(volume_total) * 100) if volume_total else 0.0
         pct_gart = (float(t_gart) / float(volume_total) * 100) if volume_total else 0.0
-
-        def calc_ating_reinc(real_pct, meta_val, is_ativacao=False):
-            if not meta_val: return 0.0
-            if real_pct <= 0:
-                return 0.0 if is_ativacao else 400.0
-            ating = (float(meta_val) / real_pct) * 100
-            if not is_ativacao:
-                return 400.0 if ating > 400.0 else ating
-            return ating
 
         pct_ating_reinc = 0.0
         if setor == 'MANUTENCAO':
