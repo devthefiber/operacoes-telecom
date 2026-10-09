@@ -4,3 +4,4 @@ python-dotenv>=1.0.0
 gunicorn>=21.2.0
 celery>=5.4.0
 redis>=5.0.0
+whitenoise>=6.7.0
