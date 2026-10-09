@@ -8,10 +8,10 @@
         :root {
             --primary: #00d2d3;
             --secondary: #5f27cd;
-            --bg: #1e272e;
-            --surface: #2f3640;
-            --text: #f5f6fa;
-            --border: #4b6584;
+            --bg: #13111C;
+            --surface: #1E1B2E;
+            --text: #E2E8F0;
+            --border: #2D2942;
             --danger: #ff6b6b;
             --warning: #f39c12;
             --success: #1dd1a1;
@@ -188,15 +188,16 @@
     <div class="header" style="justify-content: flex-start; align-items: center; position: relative;">
         <!-- Menu Hamburger -->
         <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
-            <button class="btn" id="hamburgerBtn" style="background: var(--secondary); padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: none; color: white; border-radius: 4px;">
+            <button class="btn" id="hamburgerBtn" style="background: transparent; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border: 1px solid #2D2942; color: #E2E8F0; border-radius: 6px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">
                 &#9776; Menu
             </button>
-            <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: var(--surface); min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden;">
-                <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Painel de Gestão (Dashboard)</a>
-                <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Gestão de Expurgos</a>
-                <a href="{% url 'configuracoes' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Configurações da Equipe</a>
-                <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border);">Metas Operacionais</a>
-                <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 1rem; color: var(--text); text-decoration: none; background: rgba(255,255,255,0.05);">Feriados</a>
+            <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: #1E1B2E; min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid #2D2942; border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden; font-size: 0.9rem;">
+                <div style="padding: 0.5rem 1rem; font-size: 0.65rem; font-weight: bold; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px;">Módulos Operacionais</div>
+                <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Painel de Gestão (Dashboard)</a>
+                <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Gestão de Expurgos</a>
+                <a href="{% url 'configuracoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Configurações da Equipe</a>
+                <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Metas Operacionais</a>
+                <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; background: #2D2942;">Feriados Nacionais/Estaduais</a>
             </div>
         </div>
         

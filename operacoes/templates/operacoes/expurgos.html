@@ -9,10 +9,10 @@
             --primary: #00d2d3;
             --secondary: #5f27cd;
             --accent: #ff9f43;
-            --bg-dark: #121212;
-            --bg-card: #1e1e1e;
-            --text: #f5f6fa;
-            --text-muted: #a4b0be;
+            --bg-dark: #13111C;
+            --bg-card: #1E1B2E;
+            --text: #E2E8F0;
+            --text-muted: #94A3B8;
         }
 
         * {
@@ -57,15 +57,47 @@
     </style>
 </head>
 <body>
-<div class="dashboard-header" style="padding: 2rem;">
-    <div>
-        <h1>Gestão de Expurgos</h1>
-        <p style="color: var(--text-muted);">Remova Ordens de Serviço (Garantia/Retrabalho) das estatísticas.</p>
+<div class="dashboard-header" style="padding: 1.5rem 2rem; background: #13111C; border-bottom: 2px solid var(--primary); display: flex; align-items: center; gap: 1rem;">
+    <!-- Menu Hamburger -->
+    <div class="hamburger-container" style="position: relative; display: inline-block;">
+        <button class="btn" id="hamburgerBtn" style="background: transparent; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border: 1px solid #2D2942; color: #E2E8F0; border-radius: 6px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">
+            &#9776; Menu
+        </button>
+        <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: #1E1B2E; min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid #2D2942; border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden; font-size: 0.9rem;">
+            <div style="padding: 0.5rem 1rem; font-size: 0.65rem; font-weight: bold; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px;">Módulos Operacionais</div>
+            <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Painel de Gestão (Dashboard)</a>
+            <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; background: #2D2942;">Gestão de Expurgos</a>
+            <a href="{% url 'configuracoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Configurações da Equipe</a>
+            <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Metas Operacionais</a>
+            <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Feriados Nacionais/Estaduais</a>
+        </div>
     </div>
-    <div style="display: flex; gap: 1rem;">
-        <a href="{% url 'dashboard_operacoes' %}" class="btn-primary" style="background: rgba(255,255,255,0.1);">Voltar ao Dashboard</a>
+    <div style="flex-grow: 1;">
+        <h1 style="margin: 0; font-weight: 300; font-size: 1.5rem;">Gestão de Expurgos</h1>
+        <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">Remova Ordens de Serviço (Garantia/Retrabalho) das estatísticas.</p>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        if(hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', function(event) {
+                event.stopPropagation();
+                if(menuDropdown.style.display === 'none' || menuDropdown.style.display === '') {
+                    menuDropdown.style.display = 'block';
+                } else {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+        document.addEventListener('click', function(event) {
+            if (menuDropdown && !hamburgerBtn.contains(event.target) && !menuDropdown.contains(event.target)) {
+                menuDropdown.style.display = 'none';
+            }
+        });
+    });
+</script>
 
 <div style="padding: 2rem;">
     <div class="kpi-card" style="margin-bottom: 2rem;">

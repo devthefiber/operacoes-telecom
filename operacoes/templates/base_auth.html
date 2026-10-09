@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The Fiber - Painel Operacional{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/LOGO_THEFIBER_M1.png' %}">
+    
+    <!-- PWA -->
+    <meta name="theme-color" content="#29a9e1">
+    <link rel="apple-touch-icon" href="{% static 'img/LOGO_THEFIBER_M1.png' %}">
+    
+    <!-- Tailwind CSS (via CDN para desenvolvimento rápido) -->
+    <!-- nosemgrep: html.security.audit.missing-integrity.missing-integrity -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SweetAlert2 (Para os Popups) -->
+    <!-- nosemgrep: html.security.audit.missing-integrity.missing-integrity -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Configuração de Cores Customizadas do Tailwind (Cores da Logo) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fiber-dark': '#00384d',
+                        'fiber-light': '#29a9e1',
+                        'fiber-green': '#47704c',
+                        'fiber-purple': '#792980',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+    
+    <!-- Conteúdo Principal -->
+    <main class="flex-grow flex flex-col justify-center items-center px-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Script para renderizar Mensagens do Django em formato de Popup (SweetAlert) -->
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            {% for message in messages %}
+                Toast.fire({
+                    icon: '{{ message.tags }}',
+                    title: '{{ message }}'
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        function togglePassword(inputId, btnElement) {
+            const input = document.getElementById(inputId);
+            const svg = btnElement.querySelector('svg');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />';
+            } else {
+                input.type = 'password';
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+            }
+        }
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

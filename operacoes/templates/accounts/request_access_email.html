@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background-color: #00384d;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .field {
+            margin-bottom: 15px;
+        }
+        .label {
+            font-weight: bold;
+            color: #00384d;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .value {
+            font-size: 16px;
+            background-color: #f1f5f9;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nova Solicitação de Acesso</h1>
+        </div>
+        
+        <div class="content">
+            <p>Olá Administrador,</p>
+            <p>Um novo colaborador solicitou acesso ao <strong>Painel Comercial da The Fiber</strong>. Abaixo estão os dados fornecidos:</p>
+            
+            <div class="field">
+                <div class="label">Nome do Colaborador</div>
+                <div class="value">{{ name }}</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">E-mail Corporativo</div>
+                <div class="value">{{ email }}</div>
+            </div>
+            
+            <div class="field">
+                <div class="label">Setor / Cargo</div>
+                <div class="value">{{ department }}</div>
+            </div>
+            
+            <p style="margin-top: 30px;">
+                Para aprovar e criar o acesso deste colaborador, acesse o Painel Comercial e vá até o menu <strong>Configurações > Usuários</strong> na página inicial.
+            </p>
+        </div>
+        
+        <div class="footer">
+            Este é um e-mail automático gerado pelo sistema do Painel Comercial.<br>
+            The Fiber &copy; {% now "Y" %}
+        </div>
+    </div>
+</body>
+</html>

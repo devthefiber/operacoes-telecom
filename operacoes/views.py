@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal
 from .utils import calcular_dias_uteis
@@ -10,6 +11,7 @@ from collections import Counter
 ASSUNTO_AUD_REPROVADA = 'CONTROLE DE QUALIDADE  EM CAMPO REPROVADA'
 
 
+@login_required
 def dashboard_operacoes(request):
     agora = timezone.now()
     
@@ -560,6 +562,7 @@ def dashboard_operacoes(request):
     }
     return render(request, 'operacoes/dashboard.html', context)
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def configuracoes(request):
     import datetime
     from .models import OrdemServico, Colaborador, Cargo, AlocacaoMensal
@@ -631,6 +634,7 @@ def configuracoes(request):
     }
     return render(request, 'operacoes/configuracoes.html', context)
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def salvar_colaborador(request):
     import datetime
     from django.contrib import messages
@@ -679,6 +683,7 @@ def salvar_colaborador(request):
             
     return redirect(f'/configuracoes/?mes={mes}&ano={ano}')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def excluir_papel(request, id):
     # Não exclui o funcionário, apenas tira o cargo de supervisor ou técnico, voltando a ser OUTRO
     c = get_object_or_404(Colaborador, id=id)
@@ -691,6 +696,7 @@ def excluir_papel(request, id):
     messages.success(request, f'Papel de {c.nome} removido. Ele voltou para a base geral.')
     return redirect('configuracoes')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def salvar_cargo(request):
     if request.method == 'POST':
         cargo_id = request.POST.get('cargo_id')
@@ -705,12 +711,14 @@ def salvar_cargo(request):
             messages.success(request, 'Cargo criado com sucesso!')
     return redirect('configuracoes')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def excluir_cargo(request, id):
     cargo = get_object_or_404(Cargo, id=id)
     cargo.delete()
     messages.success(request, f'Cargo {cargo.nome} excluído com sucesso.')
     return redirect('configuracoes')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def configuracoes_metas(request):
     metas = MetaOperacional.objects.all().order_by('-ano', '-mes')
     
@@ -726,6 +734,7 @@ def configuracoes_metas(request):
     }
     return render(request, 'operacoes/configuracoes_metas.html', context)
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def configuracoes_feriados(request):
     import datetime
     ano_atual = datetime.date.today().year
@@ -751,6 +760,7 @@ def configuracoes_feriados(request):
     }
     return render(request, 'operacoes/configuracoes_feriados.html', context)
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def salvar_meta(request):
     if request.method == 'POST':
         meta_id = request.POST.get('meta_id')
@@ -801,6 +811,7 @@ def salvar_meta(request):
                 
     return redirect('configuracoes_metas')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def salvar_feriado(request):
     if request.method == 'POST':
         feriado_id = request.POST.get('feriado_id')
@@ -817,6 +828,7 @@ def salvar_feriado(request):
             messages.success(request, 'Feriado cadastrado com sucesso!')
     return redirect('configuracoes_feriados')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def excluir_feriado(request, id):
     f = get_object_or_404(Feriado, id=id)
     f.delete()
@@ -825,6 +837,7 @@ def excluir_feriado(request, id):
 
 from .models import Expurgo
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def gestao_expurgos(request):
     import datetime
     agora = datetime.datetime.now()
@@ -864,6 +877,7 @@ def gestao_expurgos(request):
     expurgos = Expurgo.objects.select_related('ordem_servico', 'ordem_servico__cliente', 'ordem_servico__colaborador').order_by('-data_expurgo')
     return render(request, 'operacoes/expurgos.html', {'expurgos': expurgos, 'oss_passiveis': oss_passiveis})
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def registrar_expurgo(request):
     if request.method == 'POST':
         id_ixc = request.POST.get('id_ixc')
@@ -880,6 +894,7 @@ def registrar_expurgo(request):
             messages.error(request, f'OS {id_ixc} não encontrada no banco de dados. O técnico precisa executar primeiro ou o sistema precisa sincronizar.')
     return redirect('gestao_expurgos')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def remover_expurgo(request, id):
     if request.method == 'POST':
         e = get_object_or_404(Expurgo, id=id)
@@ -888,6 +903,7 @@ def remover_expurgo(request, id):
         messages.success(request, f'Expurgo desfeito com sucesso para a OS {os_id}. Ela voltará a contar nas estatísticas.')
     return redirect('gestao_expurgos')
 
+@user_passes_test(lambda u: u.is_staff, login_url='/')
 def replicar_mes_anterior(request):
     from django.contrib import messages
     from django.shortcuts import redirect
@@ -1105,5 +1121,184 @@ def exportar_base(request):
                 ])
             
     return response
-            
 
+# ==========================================
+# GESTÃO DE USUÁRIOS
+# ==========================================
+from django.contrib.auth import get_user_model
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def settings_users_view(request):
+    query = request.GET.get('q', '')
+    role_filter = request.GET.get('role', '')
+    
+    User = get_user_model()
+    users = User.objects.filter(is_superuser=False)
+    
+    if query:
+        users = users.filter(Q(first_name__icontains=query) | Q(email__icontains=query))
+        
+    if role_filter == 'admin':
+        users = users.filter(is_staff=True)
+    elif role_filter == 'padrao':
+        users = users.filter(is_staff=False)
+        
+    users = users.order_by('-is_active', 'first_name')
+    
+    context = {
+        'users': users,
+        'query': query,
+        'role_filter': role_filter
+    }
+    return render(request, 'operacoes/settings_users.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def add_user_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        is_admin_flag = request.POST.get('is_admin') == 'on'
+        
+        User = get_user_model()
+        if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
+            messages.error(request, 'Este e-mail já está cadastrado no sistema.')
+            return redirect('settings_users')
+            
+        novo_usuario = User.objects.create_user(
+            username=email,
+            email=email,
+            first_name=name,
+            password=None,
+            is_active=True,
+            is_staff=is_admin_flag
+        )
+        
+        if hasattr(novo_usuario, 'status_solicitacao'):
+            novo_usuario.status_solicitacao = 'APROVADO'
+            novo_usuario.save(update_fields=['status_solicitacao'])
+            
+        try:
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            from django.conf import settings
+            from django.contrib.auth.tokens import default_token_generator
+            from django.utils.http import urlsafe_base64_encode
+            from django.utils.encoding import force_bytes
+            from django.urls import reverse
+            
+            uid = urlsafe_base64_encode(force_bytes(novo_usuario.pk))
+            token = default_token_generator.make_token(novo_usuario)
+            reset_path = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            reset_url = request.build_absolute_uri(reset_path)
+            
+            subject = 'Sua conta foi criada! - THE FIBER Operações'
+            
+            html_message = render_to_string('accounts/access_approved_email.html', {
+                'name': novo_usuario.first_name,
+                'email': novo_usuario.email,
+                'reset_url': reset_url,
+            })
+            plain_message = strip_tags(html_message)
+            
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [novo_usuario.email],
+                html_message=html_message,
+                fail_silently=True,
+            )
+            messages.success(request, f'Usuário {name} criado com sucesso! Um e-mail foi enviado para que ele defina a senha.')
+        except Exception as e:
+            messages.success(request, f'Usuário {name} criado com sucesso! (Erro ao enviar e-mail de definição de senha: {e})')
+
+    return redirect('settings_users')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def toggle_user_status_view(request, user_id):
+    if request.method == 'POST':
+        User = get_user_model()
+        user = get_object_or_404(User, id=user_id)
+        if user == request.user:
+            messages.error(request, 'Você não pode desativar a si mesmo.')
+        else:
+            was_active = user.is_active
+            user.is_active = not user.is_active
+            
+            if user.is_active and not was_active and getattr(user, 'status_solicitacao', None) == 'PENDENTE':
+                user.status_solicitacao = 'APROVADO'
+            
+            # Enviar e-mail de aprovação caso esteja sendo ativado e ainda não tenha senha
+            if user.is_active and not was_active and not user.has_usable_password():
+                try:
+                    from django.core.mail import send_mail
+                    from django.template.loader import render_to_string
+                    from django.utils.html import strip_tags
+                    from django.conf import settings
+                    from django.contrib.auth.tokens import default_token_generator
+                    from django.utils.http import urlsafe_base64_encode
+                    from django.utils.encoding import force_bytes
+                    from django.urls import reverse
+                    
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    reset_path = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+                    reset_url = request.build_absolute_uri(reset_path)
+                    
+                    subject = 'Seu acesso foi aprovado! - THE FIBER Operações'
+                    
+                    html_message = render_to_string('accounts/access_approved_email.html', {
+                        'name': user.first_name,
+                        'email': user.email,
+                        'reset_url': reset_url,
+                    })
+                    plain_message = strip_tags(html_message)
+                    
+                    send_mail(
+                        subject,
+                        plain_message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    print(f"Erro ao enviar email de aprovação para {user.email}: {e}")
+            
+            user.save()
+            status_str = "ativado" if user.is_active else "inativado"
+            messages.success(request, f'Usuário {user.first_name} {status_str} com sucesso.')
+    return redirect('settings_users')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def toggle_user_role_view(request, user_id):
+    if request.method == 'POST':
+        User = get_user_model()
+        user = get_object_or_404(User, id=user_id)
+        if user == request.user:
+            messages.error(request, 'Você não pode alterar seu próprio nível de acesso.')
+        else:
+            user.is_staff = not user.is_staff
+            user.save()
+            role_str = "Administrador" if user.is_staff else "Padrão"
+            messages.success(request, f'Nível de acesso de {user.first_name} alterado para {role_str}.')
+    return redirect('settings_users')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def delete_user_view(request, user_id):
+    if request.method == 'POST':
+        User = get_user_model()
+        user = get_object_or_404(User, id=user_id)
+        if user == request.user:
+            messages.error(request, 'Você não pode excluir a si mesmo.')
+        else:
+            user_name = user.first_name or user.username
+            user.delete()
+            messages.success(request, f'O usuário {user_name} foi excluído permanentemente.')
+    return redirect('settings_users')

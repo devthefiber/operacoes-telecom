@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Usuários - The Fiber</title>
+    <link rel="icon" type="image/png" href="{% static 'img/LOGO_THEFIBER_M1.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fiber-dark': '#00384d',
+                        'fiber-light': '#29a9e1',
+                        'fiber-green': '#47704c',
+                        'fiber-purple': '#792980',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #EBE7F5;
+            color: #1e293b;
+            background-image: url("{% static 'img/LOGO_THEFIBER_M1.png' %}");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            background-size: 50%;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .bg-overlay {
+            background-color: rgba(235, 231, 245, 0.95);
+            min-height: 100vh;
+            width: 100%;
+        }
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .glass-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- DARK MODE STYLES --- */
+        body.dark-mode {
+            background-color: #13111C;
+            color: #E2E8F0;
+        }
+        body.dark-mode .bg-overlay {
+            background-color: rgba(19, 17, 28, 0.92);
+        }
+        body.dark-mode .glass-card, body.dark-mode .bg-white {
+            background: #1E1B2E !important;
+            border-color: #2D2942 !important;
+            color: #E2E8F0 !important;
+        }
+        body.dark-mode .text-slate-800, body.dark-mode .text-slate-900, body.dark-mode .text-slate-700 {
+            color: #E2E8F0 !important;
+        }
+        body.dark-mode .text-slate-600, body.dark-mode .text-slate-500 {
+            color: #94A3B8 !important;
+        }
+        body.dark-mode .bg-slate-50, body.dark-mode .bg-slate-100 {
+            background-color: #1E1B2E !important;
+            border-color: #2D2942 !important;
+        }
+        body.dark-mode border-slate-200, body.dark-mode .divide-slate-100 > * {
+            border-color: #2D2942 !important;
+        }
+        body.dark-mode input, body.dark-mode select {
+            background-color: #1E1B2E !important;
+            border-color: #2D2942 !important;
+            color: #E2E8F0 !important;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-overlay p-6 flex flex-col">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-fiber-dark">
+                Gestão de Usuários
+            </h1>
+            <p class="text-slate-500 text-sm mt-1 font-medium">Controle de acessos ao Painel</p>
+        </div>
+        <div class="flex space-x-4">
+            <a href="{% url 'dashboard_operacoes' %}" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg transition-all font-semibold flex items-center shadow-sm">
+                &larr; Voltar ao Dashboard
+            </a>
+            <button onclick="document.getElementById('modalAddUser').classList.remove('hidden')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-bold shadow-lg shadow-blue-500/30">
+                + Novo Usuário
+            </button>
+        </div>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg font-medium shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-200{% else %}bg-green-50 text-green-600 border border-green-200{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="glass-card p-6 mb-8 flex items-center justify-between">
+        <form method="GET" class="flex items-center space-x-4 w-full">
+            <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nome ou e-mail..." class="w-1/3 bg-slate-50 border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium placeholder-slate-400">
+            
+            <select name="role" class="bg-slate-50 border border-slate-300 rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium">
+                <option value="">Todos os Perfis</option>
+                <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Administrador</option>
+                <option value="padrao" {% if role_filter == 'padrao' %}selected{% endif %}>Padrão</option>
+            </select>
+            
+            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow shadow-blue-500/20 font-semibold">Filtrar</button>
+            <a href="{% url 'settings_users' %}" class="px-5 py-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors font-medium">Limpar</a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-card overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-700">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold">
+                <tr>
+                    <th class="px-6 py-4">Nome</th>
+                    <th class="px-6 py-4">E-mail</th>
+                    <th class="px-6 py-4">Perfil</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+                {% for user in users %}
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="px-6 py-4 font-bold text-slate-800">{{ user.first_name }}</td>
+                    <td class="px-6 py-4 font-medium">{{ user.email }}</td>
+                    <td class="px-6 py-4">
+                        {% if user.is_staff %}
+                            <span class="px-2.5 py-1 bg-purple-100 text-purple-700 border border-purple-200 rounded text-xs font-bold shadow-sm">Administrador</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-xs font-bold shadow-sm">Padrão</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if user.is_active %}
+                            <span class="px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded text-xs font-bold shadow-sm">Ativo</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 bg-red-100 text-red-700 border border-red-200 rounded text-xs font-bold shadow-sm">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right space-x-2 flex justify-end">
+                        <form method="POST" action="{% url 'toggle_user_role' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-xs text-slate-700 transition-colors shadow-sm font-semibold" title="Mudar Perfil">
+                                Mudar Perfil
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'toggle_user_status' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1.5 {% if user.is_active %}bg-red-50 text-red-600 hover:bg-red-100 border border-red-200{% else %}bg-green-50 text-green-600 hover:bg-green-100 border border-green-200{% endif %} rounded text-xs transition-colors shadow-sm font-bold">
+                                {% if user.is_active %}Inativar{% else %}Ativar{% endif %}
+                            </button>
+                        </form>
+                        <form method="POST" action="{% url 'delete_user' user.id %}" onsubmit="return confirmDelete(event, this, '{{ user.first_name|default:user.username }}')">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-colors shadow-sm font-bold" title="Excluir Usuário">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-slate-500 font-medium">Nenhum usuário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Adicionar Usuário -->
+    <div id="modalAddUser" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+        <div class="glass-card w-full max-w-md p-6 m-4 relative shadow-2xl">
+            <button onclick="document.getElementById('modalAddUser').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-xl font-extrabold text-slate-800 mb-6">Adicionar Novo Usuário</h2>
+            <form method="POST" action="{% url 'add_user' %}">
+                {% csrf_token %}
+                <div class="mb-5">
+                    <label class="block text-slate-600 text-sm font-bold mb-2">Nome</label>
+                    <input type="text" name="name" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium transition-colors">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-slate-600 text-sm font-bold mb-2">E-mail</label>
+                    <input type="email" name="email" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium transition-colors">
+                </div>
+                <div class="mb-8">
+                    <label class="flex items-center space-x-3 text-slate-700 font-medium cursor-pointer">
+                        <input type="checkbox" name="is_admin" class="form-checkbox w-5 h-5 border-slate-300 text-blue-600 rounded focus:ring-blue-500 transition-colors cursor-pointer">
+                        <span>Dar permissão de Administrador (acesso a configurações)</span>
+                    </label>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="document.getElementById('modalAddUser').classList.add('hidden')" class="px-5 py-2.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg font-semibold transition-colors">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow shadow-blue-500/20 transition-colors">Salvar Usuário</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+<script>
+    // Aplicar Dark Mode se estiver ativo no localStorage
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    function confirmDelete(event, form, userName) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Excluir Usuário?',
+            text: "Você está prestes a excluir permanentemente o usuário '" + userName + "'. Esta ação não pode ser desfeita!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, Excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+        return false;
+    }
+</script>
+</body>
+</html>

@@ -18,4 +18,11 @@ urlpatterns = [
     path('expurgos/', views.gestao_expurgos, name='gestao_expurgos'),
     path('expurgos/registrar/', views.registrar_expurgo, name='registrar_expurgo'),
     path('expurgos/remover/<int:id>/', views.remover_expurgo, name='remover_expurgo'),
+    
+    # Gestão de Usuários (trazida do Comercial)
+    path('config/usuarios/', views.settings_users_view, name='settings_users'),
+    path('config/usuarios/add/', views.add_user_view, name='add_user'),
+    path('config/usuarios/toggle-status/<int:user_id>/', views.toggle_user_status_view, name='toggle_user_status'),
+    path('config/usuarios/toggle-role/<int:user_id>/', views.toggle_user_role_view, name='toggle_user_role'),
+    path('config/usuarios/delete/<int:user_id>/', views.delete_user_view, name='delete_user'),
 ]
