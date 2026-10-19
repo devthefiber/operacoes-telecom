@@ -42,6 +42,8 @@ services:
     depends_on:
       - db
       - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   celery-beat:
     build: .
@@ -52,6 +54,8 @@ services:
       - .env
     depends_on:
       - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres_data:

@@ -16,7 +16,7 @@ from celery.schedules import crontab
 app.conf.beat_schedule = {
     'sincronizar-dw-toda-madrugada': {
         'task': 'sincronizar_dados_do_airflow',
-        # Executa todos os dias às 03:00 da manhã
-        'schedule': crontab(hour=3, minute=0),
+        # Executa todos os dias às 03:30 da manhã (aguardando a DAG do Airflow das 03:00 concluir)
+        'schedule': crontab(hour=3, minute=30),
     },
 }

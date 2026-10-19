@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
 from operacoes.models import Cliente, Colaborador, OrdemServico
 from django.utils import timezone
@@ -23,10 +23,14 @@ class Command(BaseCommand):
                 cursor.execute('SELECT * FROM relatorio_os_setembro')
                 rows = self.dictfetchall(cursor)
             
+            if not rows:
+                self.stdout.write(self.style.WARNING("Tabela relatorio_os_setembro está vazia! A DAG do Airflow pode estar no meio da execução."))
+                return
+
             self.stdout.write(self.style.SUCCESS(f"Sucesso! {len(rows)} registros encontrados na tabela do Airflow."))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Erro ao ler banco DW do Airflow: {e}"))
-            return
+            raise CommandError(f"Erro ao ler banco DW do Airflow: {e}")
 
         novas_os = 0
         clientes_criados = 0

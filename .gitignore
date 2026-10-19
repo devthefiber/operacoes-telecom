@@ -6,3 +6,4 @@ staticfiles/
 db.sqlite3
 celerybeat-schedule
 docker-compose.override.yml
+backup.sh
