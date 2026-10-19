@@ -449,19 +449,6 @@
                         </a>
                         {% endif %}
 
-                        <div class="border-t border-slate-200 my-1"></div>
-                        <div class="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sistema</div>
-                        
-                        
-                        {% if request.user.is_staff %}
-                        <a href="{% url 'settings_users' %}" class="flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                            <i data-lucide="shield" class="w-4 h-4 mr-2"></i> Gestão de Usuários
-                        </a>
-                        {% endif %}
-                        
-                        <a href="{% url 'password_change' %}" class="flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                            <i data-lucide="key" class="w-4 h-4 mr-2"></i> Trocar Senha
-                        </a>
                     </div>
                 </div>
                 <script>
@@ -474,9 +461,11 @@
                     });
                 </script>
                 
-                <!-- Botões Extras Fora do Menu -->
-                <a href="#" onclick="Swal.fire({icon: 'info', title: 'Em breve', text: 'Esta opção direcionará para o novo Hub!', confirmButtonColor: '#f97316'}); return false;" class="flex items-center hover:text-slate-900 transition-colors"><i data-lucide="home" class="w-3.5 h-3.5 mr-1.5"></i> Intranet</a>
-                <a href="{% url 'logout' %}" class="flex items-center hover:text-slate-900 transition-colors"><i data-lucide="log-out" class="w-3.5 h-3.5 mr-1.5"></i> Sair</a>
+                <!-- Botão Voltar ao Hub -->
+                <a href="{% url 'logout' %}" class="flex items-center px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-all text-xs font-semibold" title="Sair do painel e voltar ao Hub The Fiber">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5 mr-1.5"></i> Voltar ao Hub
+                </a>
+
 
             </div>
         </div>

@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.portal_context',
             ],
         },
     },
@@ -131,7 +132,20 @@ USE_TZ = True
 
 # HTTPS e Segurança
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CSRF_TRUSTED_ORIGINS = ['https://operacao.thefiber.com.br']
+CSRF_TRUSTED_ORIGINS = [
+    'https://operacao.thefiber.com.br',
+    'http://operacao.thefiber.com.br',
+    'https://devsistema.thefiber.com.br',
+    'http://devsistema.thefiber.com.br',
+    'https://sistema.thefiber.com.br',
+    'http://sistema.thefiber.com.br',
+    'http://45.187.166.196:8005',
+    'https://45.187.166.196:8005',
+    'http://localhost:8005',
+    'http://127.0.0.1:8005',
+]
+
+CSRF_FAILURE_VIEW = 'accounts.views.csrf_failure'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -165,3 +179,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'devthefiber@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Integração Portal Hub (The Fiber) - JWT Módulos Externos
+PORTAL_JWT_SECRET = os.environ.get('PORTAL_JWT_SECRET', 'thefiber@2026')
+PORTAL_SLUG = os.environ.get('PORTAL_SLUG', 'operacoes')
+PORTAL_HUB_URL = os.environ.get('PORTAL_HUB_URL', 'https://devsistema.thefiber.com.br/portal.html#operacoes')
+

@@ -1,154 +1,132 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
-
+from django.contrib.auth import login as auth_login, logout as auth_logout, get_user_model
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+from django.conf import settings
+import jwt
 
-@ensure_csrf_cookie
-@never_cache
-def login_view(request):
+def csrf_failure(request, reason=""):
+    """
+    Tratamento amigável para CSRF:
+    Redireciona para o painel se já autenticado ou para o Hub central se não.
+    """
     if request.user.is_authenticated:
         return redirect('dashboard_operacoes')
+    return redirect(getattr(settings, 'PORTAL_HUB_URL', 'https://devsistema.thefiber.com.br/portal.html#operacoes'))
 
-    if request.method == 'POST':
-        u = request.POST.get('username')
-        p = request.POST.get('password')
+@csrf_exempt
+def login_portal_view(request):
+    """
+    Única porta de entrada de autenticação do sistema.
+    Recebe um POST cross-origin com o campo 'token' (JWT HS256) enviado pelo Hub The Fiber,
+    valida a chave e a expiração, sincroniza o CustomUser local e o perfil (Admin vs Visitante),
+    inicia a sessão Django e redireciona direto para o Dashboard.
+    """
+    hub_url = getattr(settings, 'PORTAL_HUB_URL', 'https://devsistema.thefiber.com.br/portal.html#operacoes')
+
+    if request.method != 'POST':
+        return redirect(hub_url)
         
-        user = authenticate(request, username=u, password=p)
-        if user is not None:
-            auth_login(request, user)
-            messages.success(request, f'Bem-vindo de volta, {user.username}!')
-            
-            # Se a flag de trocar senha estiver ativa, manda pra tela de forçar senha
-            if hasattr(user, 'perfil') and user.perfil.deve_trocar_senha:
-                return redirect('force_password_change')
-                
-            return redirect('dashboard_operacoes')
-        else:
-            messages.error(request, 'Usuário ou senha incorretos.')
-            
-    return render(request, 'accounts/login.html')
+    token = request.POST.get('token')
+    if not token:
+        messages.error(request, 'Token de autenticação não fornecido pelo Hub.')
+        return redirect(hub_url)
+
+    try:
+        # 1. Validação do JWT com a chave compartilhada da empresa
+        payload = jwt.decode(
+            token,
+            settings.PORTAL_JWT_SECRET,
+            algorithms=["HS256"]
+        )
+
+        # 2. Validação do slug do módulo (aceita tanto operacoes quanto operacao)
+        token_slug = payload.get("setor")
+        valid_slugs = [settings.PORTAL_SLUG, "operacoes", "operacao"]
+        if token_slug not in valid_slugs:
+            messages.error(request, f"Token não destinado a este módulo (esperado: '{settings.PORTAL_SLUG}', recebido: '{token_slug}').")
+            return redirect(hub_url)
+
+        username = payload.get("sub")
+        if not username:
+            messages.error(request, 'Token inválido: identificador de usuário (sub) ausente.')
+            return redirect(hub_url)
+
+        nivel = payload.get("nivel", "visitante")
+        is_admin = (nivel == "admin")
+
+        # 3. Localização ou Criação do Usuário Local
+        User = get_user_model()
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={
+                'first_name': username.split('.')[0].capitalize() if '.' in username else username.capitalize(),
+                'email': f"{username}@thefiber.com.br" if '@' not in username else username,
+                'is_staff': is_admin,
+                'is_superuser': is_admin,
+                'is_active': True,
+            }
+        )
+
+        # 4. Sincronização do Nível de Permissão e Perfil
+        fields_to_update = []
+        if user.is_staff != is_admin:
+            user.is_staff = is_admin
+            fields_to_update.append('is_staff')
+        if user.is_superuser != is_admin:
+            user.is_superuser = is_admin
+            fields_to_update.append('is_superuser')
+        if not user.is_active:
+            user.is_active = True
+            fields_to_update.append('is_active')
+
+        if fields_to_update:
+            user.save(update_fields=fields_to_update)
+
+        # Garantir que o perfil esteja aprovado e sem exigência de troca de senha local
+        if hasattr(user, 'perfil'):
+            perfil = user.perfil
+            perfil_updated = False
+            if perfil.status_solicitacao != 'APROVADO':
+                perfil.status_solicitacao = 'APROVADO'
+                perfil_updated = True
+            if perfil.deve_trocar_senha:
+                perfil.deve_trocar_senha = False
+                perfil_updated = True
+            if perfil_updated:
+                perfil.save()
+
+        # 5. Início de Sessão Django
+        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        messages.success(request, f"Autenticado com sucesso via Hub! Olá, {user.first_name or user.username}.")
+        return redirect('dashboard_operacoes')
+
+    except jwt.ExpiredSignatureError:
+        messages.error(request, 'O token de acesso expirou. Clique novamente no card do Painel no Hub.')
+        return redirect(hub_url)
+    except jwt.InvalidTokenError:
+        messages.error(request, 'Assinatura do token inválida. Verifique a chave de integração.')
+        return redirect(hub_url)
+    except Exception as e:
+        messages.error(request, f'Erro inesperado na autenticação via Hub: {str(e)}')
+        return redirect(hub_url)
+
+@never_cache
+def login_view(request):
+    """
+    Ponto de interceptação para usuários não autenticados.
+    Como a autenticação é 100% via Hub, redireciona automaticamente para o Hub.
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard_operacoes')
+    hub_url = getattr(settings, 'PORTAL_HUB_URL', 'https://devsistema.thefiber.com.br/portal.html#operacoes')
+    return redirect(hub_url)
 
 def logout_view(request):
+    """
+    Encerra a sessão local no Dashboard e devolve o usuário direto ao Hub.
+    """
     auth_logout(request)
-    messages.success(request, 'Você saiu do sistema com sucesso.')
-    return redirect('login')
-
-def request_access_view(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        department = request.POST.get('department')
-        
-        subject = f'Nova Solicitação de Acesso - {name}'
-        message = f"Nome: {name}\nE-mail: {email}\nSetor: {department}\n\nPor favor, crie o usuário no painel administrativo."
-        
-        try:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            
-            # Verificar se o e-mail já existe
-            if User.objects.filter(email=email).exists():
-                messages.error(request, 'Este e-mail já possui um acesso ou solicitação no sistema.')
-                return redirect('request_access')
-                
-            # Criar o usuário inativo e pendente
-            # Usamos o email como username também
-            novo_usuario = User.objects.create_user(
-                username=email,
-                email=email,
-                first_name=name,
-                is_active=False, # Não consegue logar ainda
-            )
-            novo_usuario.set_unusable_password()
-            novo_usuario.save()
-            
-            # O sinal já criou o perfil, só atualizamos:
-            novo_usuario.perfil.setor = department
-            novo_usuario.perfil.status_solicitacao = 'PENDENTE'
-            novo_usuario.perfil.save()
-            
-            # Pega e-mails de todos os usuários que têm permissão de admin (is_staff=True)
-            admins = User.objects.filter(is_staff=True, is_active=True).exclude(email='')
-            admin_emails = list(admins.values_list('email', flat=True))
-            
-            if admin_emails:
-                from django.template.loader import render_to_string
-                from django.utils.html import strip_tags
-                
-                html_message = render_to_string('accounts/request_access_email.html', {
-                    'name': name,
-                    'email': email,
-                    'department': department,
-                })
-                plain_message = strip_tags(html_message)
-                
-                send_mail(
-                    subject,
-                    plain_message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    admin_emails,
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-            else:
-                print("Aviso: Nenhum administrador encontrado com e-mail cadastrado para receber a notificação.")
-                
-            messages.success(request, 'Solicitação enviada com sucesso! Seu cadastro está pendente de aprovação.')
-            return redirect('login')
-        except Exception as e:
-            print(f"Erro ao solicitar acesso: {e}")
-            messages.error(request, 'Ocorreu um erro ao processar sua solicitação.')
-            return redirect('request_access')
-
-    return render(request, 'accounts/request_access.html')
-
-@login_required
-def force_password_change_view(request):
-    if not hasattr(request.user, 'perfil') or not request.user.perfil.deve_trocar_senha:
-        return redirect('dashboard_operacoes')
-        
-    if request.method == 'POST':
-        p1 = request.POST.get('new_password')
-        p2 = request.POST.get('confirm_password')
-        
-        if p1 and p2 and p1 == p2:
-            if len(p1) < 8:
-                messages.warning(request, 'A senha deve ter pelo menos 8 caracteres.')
-            else:
-                user = request.user
-                try:
-                    from django.contrib.auth.password_validation import validate_password
-                    validate_password(p1, user)
-                except Exception:
-                    pass
-                user.set_password(p1)
-                user.perfil.deve_trocar_senha = False
-                user.perfil.save()
-                user.save()
-                
-                # O Django desloga o usuário quando a senha muda, precisamos relogar ele
-                from django.contrib.auth import update_session_auth_hash
-                update_session_auth_hash(request, user)
-                
-                messages.success(request, 'Senha atualizada com sucesso! Bem-vindo ao painel.')
-                return redirect('dashboard_operacoes')
-        else:
-            messages.error(request, 'As senhas não conferem.')
-            
-    return render(request, 'accounts/force_password_change.html')
-
-from django.contrib.auth.views import PasswordResetConfirmView
-
-class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        user = form.user
-        if hasattr(user, 'perfil') and user.perfil.deve_trocar_senha:
-            user.perfil.deve_trocar_senha = False
-            user.perfil.save()
-        return response
+    hub_url = getattr(settings, 'PORTAL_HUB_URL', 'https://devsistema.thefiber.com.br/portal.html#operacoes')
+    return redirect(hub_url)
