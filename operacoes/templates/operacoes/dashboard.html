@@ -85,7 +85,7 @@
             background-attachment: fixed;
             background-size: 50%;
             min-height: 100vh;
-            padding: 2rem;
+            padding: 1.25rem 1.5rem;
             position: relative;
             z-index: 1;
         }
@@ -269,10 +269,13 @@
         }
 
         .status-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 3px;
         }
 
         .status-good { background: rgba(0, 206, 201, 0.2); color: var(--accent); }
@@ -280,42 +283,101 @@
 
         .table-container {
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.05);
-            overflow: auto;
-            max-height: 70vh;
+            overflow-x: auto;
+            max-height: 72vh;
             backdrop-filter: blur(12px);
         }
 
-        table {
+        .operacoes-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            font-size: 0.825rem;
         }
 
-        th, td {
-            padding: 0.55rem 0.45rem;
+        .operacoes-table th, .operacoes-table td {
+            padding: 0.45rem 0.35rem;
             text-align: center;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             position: relative;
             white-space: nowrap;
         }
-        body.dark-mode th, body.dark-mode td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        body.dark-mode .operacoes-table th, body.dark-mode .operacoes-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
 
-        th:first-child, td:first-child {
+        .operacoes-table th:first-child, .operacoes-table td:first-child {
             text-align: left;
-            padding-left: 0.85rem;
-            padding-right: 0.85rem;
+            padding-left: 0.75rem;
+            padding-right: 0.5rem;
+            max-width: 175px;
+            white-space: normal;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
-        th {
+        .operacoes-table th {
             background: rgba(0,0,0,0.03);
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             text-transform: uppercase;
             color: var(--text-muted);
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
-        body.dark-mode th { background: rgba(0,0,0,0.3); }
+        body.dark-mode .operacoes-table th { background: rgba(0,0,0,0.3); }
+
+        /* Otimizações responsivas para telas de notebook (1366px - 1440px) */
+        @media (max-width: 1440px) {
+            body {
+                padding: 0.75rem 1rem !important;
+            }
+            .header {
+                margin-bottom: 1rem;
+            }
+            .kpi-grid {
+                margin-bottom: 1.25rem;
+                gap: 0.75rem;
+            }
+            .operacoes-table {
+                font-size: 0.78rem;
+            }
+            .operacoes-table th, .operacoes-table td {
+                padding: 0.38rem 0.22rem;
+            }
+            .operacoes-table th:first-child, .operacoes-table td:first-child {
+                padding-left: 0.55rem;
+                padding-right: 0.35rem;
+                max-width: 155px;
+                font-size: 0.75rem;
+            }
+            .operacoes-table th {
+                font-size: 0.67rem;
+                letter-spacing: 0;
+            }
+            .status-badge {
+                padding: 1px 4px;
+                font-size: 0.62rem;
+                margin-left: 2px;
+            }
+        }
+
+        /* Monitores Full HD ou superiores (1920x1080+) */
+        @media (min-width: 1600px) {
+            .operacoes-table {
+                font-size: 0.875rem;
+            }
+            .operacoes-table th, .operacoes-table td {
+                padding: 0.55rem 0.45rem;
+            }
+            .operacoes-table th:first-child, .operacoes-table td:first-child {
+                padding-left: 0.85rem;
+                padding-right: 0.75rem;
+                max-width: 210px;
+                font-size: 0.85rem;
+            }
+            .operacoes-table th {
+                font-size: 0.75rem;
+            }
+        }
 
         /* Sticky Header */
         thead {
@@ -552,7 +614,7 @@
         <div style="padding: 1rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 800; text-align: center; color: var(--accent);">
             ACOMPANHAMENTO DIÁRIO DE ATIVAÇÕES
         </div>
-        <table style="width: 100%; min-width: 1000px; font-size: 0.875rem;">
+        <table class="operacoes-table">
             <thead>
                 <!-- Linha 1 de Cabeçalhos (Agrupamentos) -->
                 <tr>
@@ -683,7 +745,7 @@
         <div style="padding: 1rem; background: rgba(0,0,0,0.8); border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 800; text-align: center; color: var(--primary);">
             ACOMPANHAMENTO DIÁRIO DE MANUTENÇÃO
         </div>
-        <table style="width: 100%; min-width: 1100px; font-size: 0.875rem;">
+        <table class="operacoes-table">
             <thead>
                 <tr>
                     <th rowspan="2" class="col-divider" style="background: rgba(108, 92, 231, 0.3);">EQUIPE</th>
