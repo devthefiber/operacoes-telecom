@@ -21,9 +21,12 @@ def sincronizar_dados_do_airflow(self):
         
         # Garante que o mês corrente tenha alocação replicada se tiver virado o mês
         from datetime import date
-        from .utils import garantir_alocacao_mes
+        from .utils import garantir_alocacao_mes, sincronizar_assuntos_disponiveis
         hoje = date.today()
         garantir_alocacao_mes(hoje.month, hoje.year)
+
+        # Sincroniza novos assuntos de OS detectados para o De-Para
+        sincronizar_assuntos_disponiveis()
 
         logger.info("Sincronização 100% concluída com sucesso!")
         return "Sincronização concluída com sucesso!"
