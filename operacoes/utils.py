@@ -178,3 +178,43 @@ def sincronizar_assuntos_disponiveis():
     if a_criar:
         RegraAssunto.objects.bulk_create(a_criar, ignore_conflicts=True)
 
+
+def garantir_base_clientes(ano=2026):
+    """
+    Garante que os 12 meses do ano tenham registro de Base de Clientes.
+    Para 2026: Jan-Set = 0, Out = 31836 (padrão inicial), Nov-Dez = 0.
+    """
+    from .models import BaseCliente
+    for mes in range(1, 13):
+        valor_padrao = 31836 if (ano == 2026 and mes == 10) else 0
+        obj, created = BaseCliente.objects.get_or_create(
+            ano=ano, mes=mes,
+            defaults={'base': valor_padrao}
+        )
+        # Se foi criado com 0 em Out/2026 ou se já existia com 0 em Out/2026 sem personalização
+        if ano == 2026 and mes == 10 and obj.base == 0 and created:
+            obj.base = 31836
+            obj.save()
+
+
+def get_base_cliente(ano, mes):
+    """Retorna a base de clientes cadastrada para o mês/ano."""
+    from .models import BaseCliente
+    garantir_base_clientes(ano)
+    bc = BaseCliente.objects.filter(ano=ano, mes=mes).first()
+    return bc.base if bc else 0
+
+
+def calcular_tt_base(volume_suporte, dias_trabalhados, total_dias_uteis, base_clientes):
+    """
+    Calcula a taxa TT Base (%) projetada para o mês:
+    ((Volume Suporte / Dias Trabalhados) * Dias Úteis Totais) / Base de Clientes * 100
+    Se o mês já encerrou (dias_trabalhados >= total_dias_uteis), resulta em (Volume Suporte / Base) * 100.
+    """
+    if not base_clientes or base_clientes <= 0 or not dias_trabalhados or dias_trabalhados <= 0:
+        return 0.0, 0.0
+    
+    projecao_suporte = (float(volume_suporte) / float(dias_trabalhados)) * float(total_dias_uteis)
+    tt_base_pct = (projecao_suporte / float(base_clientes)) * 100.0
+    return round(tt_base_pct, 2), round(projecao_suporte, 1)
+

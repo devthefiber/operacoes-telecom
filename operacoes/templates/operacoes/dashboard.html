@@ -516,6 +516,9 @@
                         <a href="{% url 'configuracoes_assuntos' %}" class="flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                             <i data-lucide="list-checks" class="w-4 h-4 mr-2"></i> De-Para de Assuntos (OS)
                         </a>
+                        <a href="{% url 'configuracoes_base_cliente' %}" class="flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                            <i data-lucide="database" class="w-4 h-4 mr-2"></i> Base de Clientes (TT Base)
+                        </a>
                         <a href="{% url 'configuracoes_feriados' %}" class="flex items-center px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                             <i data-lucide="calendar" class="w-4 h-4 mr-2"></i> Feriados Nacionais/Estaduais
                         </a>
@@ -585,8 +588,8 @@
             </div>
         </div>
 
-        <!-- Bloco 2: Indicadores de Tempo -->
-        <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 350px;">
+        <!-- Bloco 2: Indicadores de Tempo & TT Base -->
+        <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 460px;">
             <div class="kpi-card" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(46, 204, 113, 0.05)); border-color: rgba(46, 204, 113, 0.4);">
                 <div class="kpi-title" style="color: #2ecc71; margin-bottom: 0.2rem; font-size: 0.7rem;">Dias Úteis (Mês)</div>
                 <div class="kpi-value" style="font-size: 1.5rem; line-height: 1;">{{ dias_uteis.total_du|floatformat:1 }}</div>
@@ -603,6 +606,17 @@
                 <div class="kpi-title" style="color: #e74c3c; margin-bottom: 0.2rem; font-size: 0.7rem;">Dias Faltantes</div>
                 <div class="kpi-value" style="font-size: 1.5rem; line-height: 1;">{{ dias_uteis.faltantes|floatformat:1 }}</div>
                 <div class="kpi-target" style="margin-top: 0.2rem; font-size: 0.65rem;">Restantes no mês</div>
+            </div>
+
+            <div class="kpi-card" style="flex: 1; padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(162, 155, 254, 0.18), rgba(162, 155, 254, 0.06)); border-color: rgba(162, 155, 254, 0.45);" title="Projeção Suporte: {{ projecao_suporte }} chamados | Base: {{ base_cliente_atual }}">
+                <div class="kpi-value" style="font-size: 1.5rem; line-height: 1; color: #a29bfe;">
+                    {% if base_cliente_atual > 0 %}
+                        {{ tt_base_pct|floatformat:2 }}%
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <div class="kpi-title" style="color: #a29bfe; margin-top: 0.2rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">TT BASE</div>
             </div>
         </div>
 

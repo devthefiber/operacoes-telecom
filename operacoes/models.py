@@ -218,4 +218,22 @@ class RegraAssunto(models.Model):
         ordering = ['tipo_regra', 'assunto']
 
 
+class BaseCliente(models.Model):
+    MESES = MetaOperacional.MESES
+    ano = models.IntegerField(verbose_name="Ano", default=2026)
+    mes = models.IntegerField(choices=MESES, verbose_name="Mês")
+    base = models.IntegerField(default=0, verbose_name="Base de Clientes")
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Base de Clientes"
+        verbose_name_plural = "Bases de Clientes"
+        unique_together = ('ano', 'mes')
+        ordering = ['ano', 'mes']
+
+    def __str__(self):
+        return f"Base {self.get_mes_display()}/{self.ano}: {self.base}"
+
+
 

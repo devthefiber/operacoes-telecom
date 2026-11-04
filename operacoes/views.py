@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
-from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal, RegraAssunto
-from .utils import calcular_dias_uteis, garantir_alocacao_mes, get_assuntos_regras, sincronizar_assuntos_disponiveis
+from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal, RegraAssunto, BaseCliente
+from .utils import calcular_dias_uteis, garantir_alocacao_mes, get_assuntos_regras, sincronizar_assuntos_disponiveis, get_base_cliente, calcular_tt_base, garantir_base_clientes
 from django.db.models import Count, Q, Q
 from django.contrib import messages
 from collections import Counter
@@ -541,6 +541,15 @@ def dashboard_operacoes(request):
         # Assim, as pessoas do Call Center que caem aqui por engano não poluem o Dashboard principal.
         # Eles vão continuar existindo na página "Configurações", mas somem da página inicial!
 
+    # Cálculo do indicador TT Base (%)
+    base_cliente_atual = get_base_cliente(ano_atual, mes_atual)
+    tt_base_pct, projecao_suporte = calcular_tt_base(
+        volume_suporte=total_manutencao.get('suporte', 0),
+        dias_trabalhados=dias_uteis.get('trabalhados', 1.0),
+        total_dias_uteis=dias_uteis.get('total_du', 1.0),
+        base_clientes=base_cliente_atual
+    )
+
     context = {
         'mes_atual': mes_atual,
         'ano_atual': ano_atual,
@@ -553,7 +562,10 @@ def dashboard_operacoes(request):
         'equipes_ativacao': lista_ativacao,
         'equipes_manutencao': lista_manut,
         'total_ativacao': total_ativacao,
-        'total_manutencao': total_manutencao
+        'total_manutencao': total_manutencao,
+        'base_cliente_atual': base_cliente_atual,
+        'tt_base_pct': tt_base_pct,
+        'projecao_suporte': projecao_suporte,
     }
     return render(request, 'operacoes/dashboard.html', context)
 
@@ -1238,5 +1250,66 @@ def excluir_regra_assunto(request, id):
     regra.save()
     messages.success(request, f"Assunto '{regra.assunto}' desmarcado e movido para Outros/Desconsiderar.")
     return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_assuntos')
+
+
+# ==========================================
+# BASE DE CLIENTES (TT BASE)
+# ==========================================
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def configuracoes_base_cliente(request):
+    import datetime
+    from .models import BaseCliente
+    from .utils import garantir_base_clientes
+
+    ano_atual = datetime.date.today().year
+    try:
+        ano_selecionado = int(request.GET.get('ano', ano_atual))
+    except (ValueError, TypeError):
+        ano_selecionado = ano_atual
+
+    garantir_base_clientes(ano_selecionado)
+
+    bases = BaseCliente.objects.filter(ano=ano_selecionado).order_by('mes')
+
+    # Anos disponíveis para filtro
+    anos_disponiveis = list(BaseCliente.objects.values_list('ano', flat=True).distinct().order_by('-ano'))
+    if ano_selecionado not in anos_disponiveis:
+        anos_disponiveis.append(ano_selecionado)
+        anos_disponiveis.sort(reverse=True)
+
+    context = {
+        'bases': bases,
+        'ano_selecionado': ano_selecionado,
+        'anos_disponiveis': anos_disponiveis,
+    }
+    return render(request, 'operacoes/configuracoes_base_cliente.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def salvar_base_cliente(request):
+    from .models import BaseCliente
+    from django.http import JsonResponse
+
+    if request.method == 'POST':
+        base_id = request.POST.get('id')
+        base_valor = request.POST.get('base', '0').strip()
+
+        try:
+            base_valor_int = int(base_valor.replace('.', '').replace(',', ''))
+        except (ValueError, TypeError):
+            base_valor_int = 0
+
+        if base_id:
+            obj = get_object_or_404(BaseCliente, id=base_id)
+            obj.base = base_valor_int
+            obj.save()
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax'):
+                return JsonResponse({'status': 'ok', 'id': obj.id, 'base': obj.base, 'mes': obj.get_mes_display()})
+
+            messages.success(request, f"Base de {obj.get_mes_display()}/{obj.ano} atualizada para {obj.base} clientes.")
+
+    return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_base_cliente')
+
 
 

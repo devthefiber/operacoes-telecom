@@ -1,0 +1,376 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - Base de Clientes (TT Base)</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/LOGO_THEFIBER_M1.png' %}">
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --bg: #13111C;
+            --surface: #1E1B2E;
+            --text: #E2E8F0;
+            --border: #2D2942;
+            --danger: #ff6b6b;
+            --warning: #f39c12;
+            --success: #1dd1a1;
+            --accent: #a29bfe;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-edit {
+            background: rgba(162, 155, 254, 0.2);
+            color: var(--accent);
+            border: 1px solid rgba(162, 155, 254, 0.4);
+            padding: 0.35rem 0.8rem;
+            font-size: 0.82rem;
+        }
+        .btn-edit:hover {
+            background: var(--accent);
+            color: #13111C;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .info-box {
+            background: rgba(0, 210, 211, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 0.9rem 1.2rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: rgba(0,0,0,0.2);
+            color: #94A3B8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge-base {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-zero {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .badge-mes {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 10% auto; 
+            padding: 25px;
+            border: 1px solid var(--border);
+            width: 420px;
+            max-width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: #fff; }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #94A3B8;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.6rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .messages {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" style="position: relative; flex-wrap: wrap;">
+        <!-- Menu Hamburger -->
+        <div style="display: flex; align-items: center;">
+            <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
+                <button class="btn" id="hamburgerBtn" style="background: transparent; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border: 1px solid #2D2942; color: #E2E8F0; border-radius: 6px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">
+                    &#9776; Menu
+                </button>
+                <div class="menu-dropdown" id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: #1E1B2E; min-width: 250px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid #2D2942; border-radius: 8px; z-index: 1000; margin-top: 0.5rem; overflow: hidden; font-size: 0.9rem;">
+                    <div style="padding: 0.5rem 1rem; font-size: 0.65rem; font-weight: bold; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px;">Módulos Operacionais</div>
+                    <a href="{% url 'dashboard_operacoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Painel de Gestão (Dashboard)</a>
+                    <a href="{% url 'gestao_expurgos' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Gestão de Expurgos</a>
+                    <a href="{% url 'configuracoes' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Configurações da Equipe</a>
+                    <a href="{% url 'configuracoes_metas' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Metas Operacionais</a>
+                    <a href="{% url 'configuracoes_assuntos' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">De-Para de Assuntos (OS)</a>
+                    <a href="{% url 'configuracoes_base_cliente' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; background: #2D2942; font-weight: bold;">Base de Clientes (TT Base)</a>
+                    <a href="{% url 'configuracoes_feriados' %}" style="display: block; padding: 0.75rem 1rem; color: #E2E8F0; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#2D2942'" onmouseout="this.style.background='transparent'">Feriados Nacionais/Estaduais</a>
+                </div>
+            </div>
+            <h1>Configurações da Base de Clientes (TT Base)</h1>
+        </div>
+
+        <div style="display: flex; gap: 0.8rem; align-items: center;">
+            <a href="{% url 'dashboard_operacoes' %}" class="btn" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);">&larr; Voltar ao Dashboard</a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="info-box">
+        <strong>💡 Indicador TT Base:</strong> Representa a taxa percentual de chamados de Suporte (Manutenção) sobre a carteira total de clientes ativos.<br>
+        <strong>Cálculo:</strong> <code>((Volume Suporte / Dias Trabalhados) × Dias Úteis Totais) / Base de Clientes</code>. Quando o mês encerra, utiliza diretamente <code>Volume Suporte / Base de Clientes</code>.
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>
+                Base de Clientes por Mês
+                <form method="GET" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: normal;">
+                    <label>Ano:</label>
+                    <select name="ano" onchange="this.form.submit()" style="padding: 0.4rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+                        {% for a in anos_disponiveis %}
+                            <option value="{{ a }}" {% if a == ano_selecionado %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Mês / Ano</th>
+                        <th style="width: 45%;">Base de Clientes (Ativos)</th>
+                        <th style="width: 30%; text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bases %}
+                    <tr id="row-base-{{ b.id }}">
+                        <td>
+                            <span class="badge-mes">{{ b.get_mes_display }} / {{ b.ano }}</span>
+                        </td>
+                        <td>
+                            {% if b.base > 0 %}
+                                <span class="badge-base" id="val-base-{{ b.id }}">{{ b.base }}</span>
+                                <span style="color: #64748b; font-size: 0.8rem; margin-left: 0.4rem;">clientes</span>
+                            {% else %}
+                                <span class="badge-zero" id="val-base-{{ b.id }}">0 (Não informado)</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-edit" onclick="abrirModalEdicao('{{ b.id }}', '{{ b.get_mes_display }} / {{ b.ano }}', '{{ b.base }}')">
+                                ✏️ Editar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #94A3B8; padding: 2rem;">Nenhum registro encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Base -->
+    <div id="modalEditBase" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="fecharModal()">&times;</span>
+            <h3 style="margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;" id="modalTitle">Editar Base de Clientes</h3>
+            
+            <form id="formEditBase" method="POST" action="{% url 'salvar_base_cliente' %}">
+                {% csrf_token %}
+                <input type="hidden" name="id" id="editBaseId">
+
+                <div class="form-group">
+                    <label id="labelMesAno">Mês / Ano</label>
+                    <input type="text" id="displayMesAno" disabled style="background: rgba(255,255,255,0.05); color: #94A3B8;">
+                </div>
+
+                <div class="form-group">
+                    <label for="inputBaseValor">Total de Clientes na Base:</label>
+                    <input type="number" name="base" id="inputBaseValor" required min="0" placeholder="Ex: 31836">
+                    <small style="color: #94A3B8; display: block; margin-top: 0.3rem;">Digite apenas números (ex: 31836 para Outubro).</small>
+                </div>
+
+                <div style="text-align: right; margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn" style="background: transparent; border: 1px solid var(--border); color: var(--text);" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn">Salvar Base</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Menu Hamburger
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        if (hamburgerBtn && menuDropdown) {
+            hamburgerBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+            document.addEventListener('click', function(e) {
+                if (!menuDropdown.contains(e.target) && e.target !== hamburgerBtn) {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Modal
+        function abrirModalEdicao(id, mesAno, valorAtual) {
+            document.getElementById('editBaseId').value = id;
+            document.getElementById('displayMesAno').value = mesAno;
+            document.getElementById('inputBaseValor').value = valorAtual;
+            document.getElementById('modalEditBase').style.display = 'block';
+            document.getElementById('inputBaseValor').focus();
+        }
+
+        function fecharModal() {
+            document.getElementById('modalEditBase').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalEditBase');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
