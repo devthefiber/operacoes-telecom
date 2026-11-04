@@ -51,3 +51,46 @@ def calcular_dias_uteis(ano, mes):
         'trabalhados': trabalhados if trabalhados > 0 else 1.0, # Evitar divisão por zero
         'faltantes': total_du - trabalhados if (total_du - trabalhados) > 0 else 0
     }
+
+def garantir_alocacao_mes(mes, ano):
+    """
+    Se o mês solicitado não tiver nenhuma alocação configurada,
+    busca automaticamente o mês anterior e replica toda a equipe e metas operacionais.
+    """
+    from .models import AlocacaoMensal, MetaOperacional
+    if not AlocacaoMensal.objects.filter(mes=mes, ano=ano).exists():
+        mes_ant = 12 if mes == 1 else mes - 1
+        ano_ant = ano - 1 if mes == 1 else ano
+        alocacoes_ant = AlocacaoMensal.objects.filter(mes=mes_ant, ano=ano_ant)
+        if alocacoes_ant.exists():
+            novas = [
+                AlocacaoMensal(
+                    colaborador=a.colaborador,
+                    mes=mes,
+                    ano=ano,
+                    cargo=a.cargo,
+                    supervisor=a.supervisor,
+                    setor=a.setor,
+                    contratacao=a.contratacao,
+                    marcacao=a.marcacao,
+                    contabiliza_indicadores=a.contabiliza_indicadores,
+                )
+                for a in alocacoes_ant
+            ]
+            AlocacaoMensal.objects.bulk_create(novas)
+
+        # Replicar metas operacionais caso não existam no mês novo
+        if not MetaOperacional.objects.filter(mes=mes, ano=ano).exists():
+            meta_ant = MetaOperacional.objects.filter(mes=mes_ant, ano=ano_ant).first()
+            if meta_ant:
+                MetaOperacional.objects.create(
+                    ano=ano,
+                    mes=mes,
+                    ativacao_meta_volume=meta_ant.ativacao_meta_volume,
+                    ativacao_meta_reincidencia=meta_ant.ativacao_meta_reincidencia,
+                    ativacao_meta_auditoria=meta_ant.ativacao_meta_auditoria,
+                    manutencao_meta_volume=meta_ant.manutencao_meta_volume,
+                    manutencao_meta_retrabalho=meta_ant.manutencao_meta_retrabalho,
+                    manutencao_meta_garantia_30d=meta_ant.manutencao_meta_garantia_30d,
+                    manutencao_meta_auditoria=meta_ant.manutencao_meta_auditoria,
+                )

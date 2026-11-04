@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal
-from .utils import calcular_dias_uteis
+from .utils import calcular_dias_uteis, garantir_alocacao_mes
 from django.db.models import Count, Q, Q
 from django.contrib import messages
 from collections import Counter
@@ -30,6 +30,9 @@ def dashboard_operacoes(request):
                 mes_atual = ultima_os.data_fechamento.month
                 ano_atual = ultima_os.data_fechamento.year
     
+    # Garante alocação do mês (se virar o mês, replica do anterior automaticamente)
+    garantir_alocacao_mes(mes_atual, ano_atual)
+
     # Busca a meta do mês, se não achar cria uma padrão para não quebrar
     meta, created = MetaOperacional.objects.get_or_create(
         ano=ano_atual, mes=mes_atual,
@@ -259,6 +262,7 @@ def dashboard_operacoes(request):
 
         target_dict[nome_equipe]['tecnicos'].append({
             'nome': tecnico.nome,
+            'marcacao': aloc.marcacao if aloc and aloc.marcacao else '',
             'contabiliza': aloc.contabiliza_indicadores,
             'servicos': t_servicos,
             'suporte': t_suporte,
@@ -571,6 +575,9 @@ def configuracoes(request):
     mes_atual = int(request.GET.get('mes', hoje.month))
     ano_atual = int(request.GET.get('ano', hoje.year))
 
+    # Garante que o mês tenha alocação (se virar o mês, replica do anterior automaticamente)
+    garantir_alocacao_mes(mes_atual, ano_atual)
+
     # Quem tem OS no banco
     colabs_com_os = OrdemServico.objects.values_list('colaborador_id', flat=True).distinct()
 
@@ -595,6 +602,7 @@ def configuracoes(request):
             'contratacao': aloc.contratacao if aloc else None,
             'supervisor_nome': aloc.supervisor.nome if aloc and aloc.supervisor else None,
             'supervisor_id': aloc.supervisor.id if aloc and aloc.supervisor else None,
+            'marcacao': aloc.marcacao if aloc and aloc.marcacao else (tec.marcacao or ''),
             'contabiliza': aloc.contabiliza_indicadores if aloc else True,
         })
 
@@ -630,7 +638,8 @@ def configuracoes(request):
         'cargos': cargos,
         'tipos': Colaborador.TIPO_CHOICES,
         'setores': Colaborador.SETOR_CHOICES,
-        'contratacoes': Colaborador.CONTRATACAO_CHOICES
+        'contratacoes': Colaborador.CONTRATACAO_CHOICES,
+        'marcacoes': Colaborador.MARCACAO_CHOICES
     }
     return render(request, 'operacoes/configuracoes.html', context)
 
@@ -648,6 +657,7 @@ def salvar_colaborador(request):
         setor = request.POST.get('setor')
         contratacao = request.POST.get('contratacao')
         supervisor_id = request.POST.get('supervisor_id')
+        marcacao = request.POST.get('marcacao', '')
         contabiliza_indicadores = request.POST.get('contabiliza_indicadores') == 'on'
         
         mes = int(request.POST.get('mes', datetime.date.today().month))
@@ -664,6 +674,7 @@ def salvar_colaborador(request):
             c.setor = setor
             c.contratacao = contratacao
             c.supervisor = supervisor_obj
+            c.marcacao = marcacao
             c.save()
             
             # Atualiza ou cria a alocacao mensal
@@ -676,6 +687,7 @@ def salvar_colaborador(request):
             aloc.setor = setor
             aloc.contratacao = contratacao
             aloc.supervisor = supervisor_obj
+            aloc.marcacao = marcacao
             aloc.contabiliza_indicadores = contabiliza_indicadores
             aloc.save()
             
@@ -936,6 +948,8 @@ def replicar_mes_anterior(request):
                 'supervisor': aloc.supervisor,
                 'setor': aloc.setor,
                 'contratacao': aloc.contratacao,
+                'marcacao': aloc.marcacao,
+                'contabiliza_indicadores': aloc.contabiliza_indicadores,
             }
         )
         if created:

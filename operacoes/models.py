@@ -26,11 +26,18 @@ class Colaborador(models.Model):
         ('CLT', 'CLT'),
         ('PJ', 'PJ'),
     ]
+    MARCACAO_CHOICES = [
+        ('', 'Nenhuma'),
+        ('(Prev.)', '(Prev.)'),
+        ('(Ap)', '(Ap)'),
+        ('(PJ)', '(PJ)'),
+    ]
     nome = models.CharField(max_length=200, verbose_name="Nome do Colaborador")
     cargo = models.ForeignKey(Cargo, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Cargo", related_name='colaboradores')
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='TECNICO')
     setor = models.CharField(max_length=20, choices=SETOR_CHOICES, blank=True, null=True)
     contratacao = models.CharField(max_length=10, choices=CONTRATACAO_CHOICES, blank=True, null=True, verbose_name="CLT / PJ")
+    marcacao = models.CharField(max_length=20, choices=MARCACAO_CHOICES, blank=True, null=True, default='', verbose_name="Marcação")
     ativo = models.BooleanField(default=True)
     
     supervisor = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='liderados', verbose_name="Supervisor")
@@ -52,6 +59,7 @@ class AlocacaoMensal(models.Model):
     supervisor = models.ForeignKey(Colaborador, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipe_no_mes')
     setor = models.CharField(max_length=20, choices=Colaborador.SETOR_CHOICES, blank=True, null=True)
     contratacao = models.CharField(max_length=10, choices=Colaborador.CONTRATACAO_CHOICES, blank=True, null=True)
+    marcacao = models.CharField(max_length=20, choices=Colaborador.MARCACAO_CHOICES, blank=True, null=True, default='', verbose_name="Marcação")
     contabiliza_indicadores = models.BooleanField(default=True, verbose_name="Contabiliza para Metas?")
 
     def __str__(self):

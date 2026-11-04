@@ -1,11 +1,17 @@
 from django.contrib import admin
-from .models import Colaborador, Cliente, OrdemServico, Auditoria, Expurgo, Feriado, MetaOperacional
+from .models import Colaborador, Cliente, OrdemServico, Auditoria, Expurgo, Feriado, MetaOperacional, AlocacaoMensal
 
 @admin.register(Colaborador)
 class ColaboradorAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'cargo', 'tipo', 'setor', 'supervisor', 'ativo')
-    list_filter = ('tipo', 'setor', 'supervisor', 'ativo')
-    search_fields = ('nome', 'cargo')
+    list_display = ('nome', 'cargo', 'tipo', 'setor', 'supervisor', 'contratacao', 'marcacao', 'ativo')
+    list_filter = ('tipo', 'setor', 'contratacao', 'marcacao', 'supervisor', 'ativo')
+    search_fields = ('nome', 'cargo__nome')
+
+@admin.register(AlocacaoMensal)
+class AlocacaoMensalAdmin(admin.ModelAdmin):
+    list_display = ('colaborador', 'mes', 'ano', 'cargo', 'supervisor', 'setor', 'contratacao', 'marcacao', 'contabiliza_indicadores')
+    list_filter = ('ano', 'mes', 'setor', 'contratacao', 'marcacao', 'contabiliza_indicadores', 'supervisor')
+    search_fields = ('colaborador__nome',)
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):

@@ -287,6 +287,7 @@
                         <th>Cargo</th>
                         <th>Setor</th>
                         <th>CLT/PJ</th>
+                        <th>Marcação</th>
                         <th>Supervisor Atrelado</th>
                         <th>Contabiliza Metas?</th>
                         <th>Ações</th>
@@ -299,6 +300,13 @@
                     <td>{{ aloc.cargo_nome|default:"-" }}</td>
                     <td>{{ aloc.setor|default:"-" }}</td>
                     <td>{{ aloc.contratacao|default:"-" }}</td>
+                    <td>
+                        {% if aloc.marcacao %}
+                            <span style="font-weight: 600; color: var(--primary);">{{ aloc.marcacao }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>{{ aloc.supervisor_nome|default:"Sem Supervisor" }}</td>
                     <td style="text-align: center;">
                         {% if aloc.contabiliza %}
@@ -309,7 +317,7 @@
                     </td>
                     <td>
                         <button class="btn" style="background:var(--secondary); font-size:0.8rem; padding:0.2rem 0.5rem" 
-                            onclick="openEditModal('{{ aloc.id }}', '{{ aloc.tipo }}', '{{ aloc.cargo_id|default:'' }}', '{{ aloc.setor|default:'' }}', '{{ aloc.contratacao|default:'' }}', '{{ aloc.supervisor_id|default:'' }}', '{{ aloc.contabiliza|yesno:'true,false' }}')">Editar</button>
+                            onclick="openEditModal('{{ aloc.id }}', '{{ aloc.tipo }}', '{{ aloc.cargo_id|default:'' }}', '{{ aloc.setor|default:'' }}', '{{ aloc.contratacao|default:'' }}', '{{ aloc.supervisor_id|default:'' }}', '{{ aloc.contabiliza|yesno:'true,false' }}', '{{ aloc.marcacao|default:'' }}')">Editar</button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -390,6 +398,18 @@
                     </select>
                 </div>
 
+                <div class="form-group" id="groupMarcacao" style="display:none;">
+                    <label>Marcação / Tag (Exibida no Dashboard):</label>
+                    <select name="marcacao" id="modalMarcacao">
+                        <option value="">-- Nenhuma --</option>
+                        {% for value, label in marcacoes %}
+                            {% if value %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div class="form-group" id="groupSupervisor" style="display:none;">
                     <label>Atrelar a qual Supervisor?</label>
                     <select name="supervisor_id" id="modalSupervisor">
@@ -421,22 +441,25 @@
             document.getElementById("modalCargoSelect").value = "";
             document.getElementById("modalSetor").value = "";
             document.getElementById("modalContratacao").value = "";
+            document.getElementById("modalMarcacao").value = "";
             document.getElementById("modalSupervisor").value = "";
             document.getElementById("modalContabiliza").checked = true;
 
             if(tipo === 'SUPERVISOR') {
                 document.getElementById("modalTitle").innerText = "Adicionar Supervisor";
                 document.getElementById("groupSupervisor").style.display = "none";
+                document.getElementById("groupMarcacao").style.display = "none";
                 document.getElementById("groupContabiliza").style.display = "none";
             } else {
                 document.getElementById("modalTitle").innerText = "Adicionar Técnico";
                 document.getElementById("groupSupervisor").style.display = "block";
+                document.getElementById("groupMarcacao").style.display = "block";
                 document.getElementById("groupContabiliza").style.display = "block";
             }
             modal.style.display = "block";
         }
 
-        function openEditModal(id, tipo, cargo, setor, contratacao, supervisor_id, contabiliza) {
+        function openEditModal(id, tipo, cargo, setor, contratacao, supervisor_id, contabiliza, marcacao) {
             document.getElementById("modalTipo").value = tipo;
             document.querySelector('select[name="colaborador_id"]').value = id;
             
@@ -446,16 +469,19 @@
 
             document.getElementById("modalSetor").value = setor;
             document.getElementById("modalContratacao").value = contratacao;
+            document.getElementById("modalMarcacao").value = marcacao || "";
             document.getElementById("modalSupervisor").value = supervisor_id;
             document.getElementById("modalContabiliza").checked = (contabiliza === 'true');
 
             if(tipo === 'SUPERVISOR') {
                 document.getElementById("modalTitle").innerText = "Editar Supervisor";
                 document.getElementById("groupSupervisor").style.display = "none";
+                document.getElementById("groupMarcacao").style.display = "none";
                 document.getElementById("groupContabiliza").style.display = "none";
             } else {
                 document.getElementById("modalTitle").innerText = "Editar Técnico";
                 document.getElementById("groupSupervisor").style.display = "block";
+                document.getElementById("groupMarcacao").style.display = "block";
                 document.getElementById("groupContabiliza").style.display = "block";
             }
             modal.style.display = "block";

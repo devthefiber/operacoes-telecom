@@ -678,8 +678,11 @@
                 <tr>
                     <td class="col-divider" style="padding-left: 2rem;">
                         {{ tecnico.nome|upper }}
+                        {% if tecnico.marcacao %}
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #6c5ce7; margin-left: 4px;">{{ tecnico.marcacao }}</span>
+                        {% endif %}
                         {% if not tecnico.contabiliza %}
-                            <span style="font-size: 0.7rem; color: #e74c3c; margin-left: 8px;" title="Técnico não soma nos totais da equipe (Férias/Novato)">🚫 Não Contabiliza</span>
+                            <span style="font-size: 0.65rem; color: #64748b; background: rgba(100, 116, 139, 0.12); border: 1px solid rgba(100, 116, 139, 0.25); border-radius: 4px; padding: 1px 5px; margin-left: 6px; font-weight: 600; vertical-align: middle;" title="Técnico não soma nos totais da equipe (Férias/Novato)">N/C</span>
                         {% endif %}
                     </td>
                     <td>{{ tecnico.servicos }}</td>
@@ -802,8 +805,11 @@
                 <tr>
                     <td class="col-divider" style="padding-left: 2rem;">
                         {{ tecnico.nome|upper }}
+                        {% if tecnico.marcacao %}
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #6c5ce7; margin-left: 4px;">{{ tecnico.marcacao }}</span>
+                        {% endif %}
                         {% if not tecnico.contabiliza %}
-                            <span style="font-size: 0.7rem; color: #e74c3c; margin-left: 8px;" title="Técnico não soma nos totais da equipe (Férias/Novato)">🚫 Não Contabiliza</span>
+                            <span style="font-size: 0.65rem; color: #64748b; background: rgba(100, 116, 139, 0.12); border: 1px solid rgba(100, 116, 139, 0.25); border-radius: 4px; padding: 1px 5px; margin-left: 6px; font-weight: 600; vertical-align: middle;" title="Técnico não soma nos totais da equipe (Férias/Novato)">N/C</span>
                         {% endif %}
                     </td>
                     <td>{{ tecnico.suporte }}</td> <!-- SUPORTE -->
