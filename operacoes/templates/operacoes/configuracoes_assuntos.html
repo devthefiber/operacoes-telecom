@@ -1,0 +1,574 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TheFiber - De-Para de Assuntos de OS</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/LOGO_THEFIBER_M1.png' %}">
+    <style>
+        :root {
+            --primary: #00d2d3;
+            --secondary: #5f27cd;
+            --bg: #13111C;
+            --surface: #1E1B2E;
+            --text: #E2E8F0;
+            --border: #2D2942;
+            --danger: #ff6b6b;
+            --warning: #f39c12;
+            --success: #1dd1a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--secondary);
+            color: #fff;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            padding: 1.2rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .kpi-card.garantia { border-left-color: #3498db; }
+        .kpi-card.suporte { border-left-color: #2ecc71; }
+        .kpi-card.outros { border-left-color: #95a5a6; }
+
+        .kpi-card h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+        }
+        .kpi-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pill:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .pill.active {
+            background: var(--primary);
+            color: var(--bg);
+            border-color: var(--primary);
+            font-weight: bold;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 20px;
+            min-width: 260px;
+            font-size: 0.9rem;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--secondary);
+            background: rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge-garantia {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+
+        .badge-suporte {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+
+        .badge-outros {
+            background: rgba(149, 165, 166, 0.15);
+            color: #94a3b8;
+            border: 1px solid rgba(149, 165, 166, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+        }
+
+        .select-regra {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            vertical-align: middle;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #475569;
+            transition: .3s;
+            border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            margin: 8% auto; 
+            padding: 25px;
+            border: 1px solid var(--border);
+            width: 500px;
+            max-width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: #fff; }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .form-group select, .form-group input[type="text"] {
+            width: 100%;
+            padding: 0.6rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .messages {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" style="position: relative; flex-wrap: wrap;">
+        <!-- Menu Hamburger -->
+        <div style="display: flex; align-items: center;">
+            <div class="hamburger-container" style="position: relative; display: inline-block; margin-right: 1rem;">
+                <button class="btn" id="hamburgerBtn" style="background: transparent; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; border: 1px solid var(--primary); color: var(--primary);">
+                    &#9776; Menu
+                </button>
+                <div id="menuDropdown" style="display: none; position: absolute; left: 0; top: 100%; background: var(--surface); min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 4px; z-index: 1000; margin-top: 5px;">
+                    <a href="{% url 'dashboard_operacoes' %}" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">📊 Painel Operacional</a>
+                    <a href="{% url 'configuracoes' %}" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">👥 Configurações de Equipe</a>
+                    <a href="{% url 'configuracoes_metas' %}" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">🎯 Metas Operacionais</a>
+                    <a href="{% url 'configuracoes_assuntos' %}" style="color: var(--primary); font-weight: bold; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">📋 De-Para de Assuntos (OS)</a>
+                    <a href="{% url 'configuracoes_feriados' %}" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">📅 Feriados</a>
+                    <a href="{% url 'gestao_expurgos' %}" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border);">✂️ Gestão de Expurgos</a>
+                    <a href="/admin/" target="_blank" style="color: var(--text); padding: 12px 16px; text-decoration: none; display: block;">⚙️ Django Admin</a>
+                </div>
+            </div>
+            <h1>De-Para de Assuntos de OS (Garantia &amp; Suporte)</h1>
+        </div>
+
+        <div style="display: flex; gap: 0.8rem; align-items: center;">
+            <a href="{% url 'dashboard_operacoes' %}" class="btn" style="background: transparent; border: 1px solid var(--primary); color: var(--primary);">&larr; Voltar ao Dashboard</a>
+            <button class="btn" onclick="openModal()">+ Novo Assunto</button>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <h4>Total no Catálogo</h4>
+            <div class="value">{{ total_geral }}</div>
+        </div>
+        <div class="kpi-card garantia">
+            <h4>Garantia 30D (Manutenção)</h4>
+            <div class="value" style="color: #3498db;">{{ total_garantia }}</div>
+        </div>
+        <div class="kpi-card suporte">
+            <h4>Suporte / Reincidência (Ativação)</h4>
+            <div class="value" style="color: #2ecc71;">{{ total_suporte }}</div>
+        </div>
+        <div class="kpi-card outros">
+            <h4>Outros / Não Contabiliza</h4>
+            <div class="value" style="color: #94a3b8;">{{ total_outros }}</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>
+                <span>Classificação de Assuntos de OS</span>
+                <span style="font-size: 0.85rem; color: #94a3b8; font-weight: normal;">Todos os assuntos são sincronizados do banco de OS</span>
+            </h2>
+
+            <!-- Barra de Filtros e Busca -->
+            <div class="filter-bar">
+                <div class="filter-pills">
+                    <a href="?tipo=TODOS" class="pill {% if tipo_filtro == 'TODOS' %}active{% endif %}">Todos ({{ total_geral }})</a>
+                    <a href="?tipo=GARANTIA" class="pill {% if tipo_filtro == 'GARANTIA' %}active{% endif %}" style="border-left: 3px solid #3498db;">Garantia 30D ({{ total_garantia }})</a>
+                    <a href="?tipo=SUPORTE" class="pill {% if tipo_filtro == 'SUPORTE' %}active{% endif %}" style="border-left: 3px solid #2ecc71;">Suporte Ativação ({{ total_suporte }})</a>
+                    <a href="?tipo=OUTROS" class="pill {% if tipo_filtro == 'OUTROS' %}active{% endif %}" style="border-left: 3px solid #94a3b8;">Outros ({{ total_outros }})</a>
+                </div>
+
+                <div>
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Filtrar assunto na tabela..." onkeyup="filterTable()">
+                </div>
+            </div>
+
+            <table id="assuntosTable">
+                <thead>
+                    <tr>
+                        <th style="width: 45%;">Assunto da OS</th>
+                        <th style="width: 25%;">Categoria / Regra de Cálculo</th>
+                        <th style="width: 15%; text-align: center;">Ativo para Cálculo?</th>
+                        <th style="width: 15%; text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for regra in regras %}
+                    <tr data-assunto="{{ regra.assunto|upper }}" data-tipo="{{ regra.tipo_regra }}" id="row-{{ regra.id }}">
+                        <td>
+                            <strong>{{ regra.assunto }}</strong>
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'salvar_regra_assunto' %}" style="display: flex; gap: 0.5rem; align-items: center;" id="form-{{ regra.id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="regra_id" value="{{ regra.id }}">
+                                <select name="tipo_regra" class="select-regra" onchange="autoSalvar('{{ regra.id }}')">
+                                    {% for val, label in tipos_choices %}
+                                        <option value="{{ val }}" {% if regra.tipo_regra == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                        </td>
+                        <td style="text-align: center;">
+                                <label class="switch" title="Marque para este assunto ser contabilizado na métrica">
+                                    <input type="checkbox" name="ativo" {% if regra.ativo %}checked{% endif %} onchange="autoSalvar('{{ regra.id }}')">
+                                    <span class="slider"></span>
+                                </label>
+                                <span id="status-text-{{ regra.id }}" style="font-size: 0.75rem; margin-left: 6px; color: {% if regra.ativo %}#2ecc71{% else %}#94a3b8{% endif %}; font-weight: 600;">
+                                    {% if regra.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                        </td>
+                        <td style="text-align: right;">
+                                <button type="submit" class="btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" title="Salvar alterações">Salvar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8; padding: 2rem;">
+                            Nenhum assunto encontrado para este filtro.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Novo Assunto -->
+    <div id="modalNovo" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 style="color: var(--primary); margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Cadastrar Novo Assunto</h2>
+            <form method="POST" action="{% url 'adicionar_regra_assunto' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Nome / Assunto da OS (como vem do IXC):</label>
+                    <input type="text" name="assunto" placeholder="Ex: [OP] REINCIDENCIA - SINAL ALTO" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Regra / Categoria:</label>
+                    <select name="tipo_regra">
+                        {% for val, label in tipos_choices %}
+                            <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="ativo" checked style="width: 18px; height: 18px;">
+                        <strong>Ativo para cálculo das metas?</strong>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem; padding: 0.8rem; font-size: 1rem;">Salvar Assunto</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal
+        const modal = document.getElementById("modalNovo");
+        function openModal() { modal.style.display = "block"; }
+        function closeModal() { modal.style.display = "none"; }
+        window.onclick = function(event) { if (event.target == modal) closeModal(); }
+
+        // Live Filter
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toUpperCase();
+            const rows = document.querySelectorAll("#assuntosTable tbody tr");
+            rows.forEach(row => {
+                const assunto = row.getAttribute("data-assunto") || "";
+                if (assunto.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        // Salvamento Rápido via AJAX
+        function autoSalvar(regraId) {
+            const form = document.getElementById("form-" + regraId);
+            const formData = new FormData(form);
+            formData.append('ajax', '1');
+
+            // Feedback visual imediato no texto de status
+            const checkbox = form.querySelector('input[name="ativo"]');
+            const statusText = document.getElementById("status-text-" + regraId);
+            if (checkbox && statusText) {
+                if (checkbox.checked) {
+                    statusText.innerText = "Ativo";
+                    statusText.style.color = "#2ecc71";
+                } else {
+                    statusText.innerText = "Inativo";
+                    statusText.style.color = "#94a3b8";
+                }
+            }
+
+            fetch("{% url 'salvar_regra_assunto' %}", {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                // Sucesso
+            }).catch(err => {
+                console.error("Erro ao salvar regra via AJAX:", err);
+            });
+        }
+
+        // Hamburger Menu
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        if(hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', function(event) {
+                menuDropdown.style.display = (menuDropdown.style.display === 'none') ? 'block' : 'none';
+                event.stopPropagation();
+            });
+            window.addEventListener('click', function(event) {
+                if (!event.target.closest('.hamburger-container')) {
+                    menuDropdown.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

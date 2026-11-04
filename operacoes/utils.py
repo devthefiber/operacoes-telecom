@@ -94,3 +94,87 @@ def garantir_alocacao_mes(mes, ano):
                     manutencao_meta_garantia_30d=meta_ant.manutencao_meta_garantia_30d,
                     manutencao_meta_auditoria=meta_ant.manutencao_meta_auditoria,
                 )
+
+def get_assuntos_regras():
+    """
+    Retorna os conjuntos de assuntos ativos para Garantia 30D e Suporte Ativação.
+    Se a tabela ainda não tiver dados, usa os padrões como fallback defensivo.
+    """
+    from .models import RegraAssunto
+    
+    padrao_garantia = [
+        '[OP] REINCIDENCIA - SEM ACESSO',
+        '[OP] REINCIDENCIA - INTERNET LENTA - CASA',
+        '[OP] REINCIDENCIA - SEM ACESSO - APARTAMENTO',
+        '[OP] REINCIDENCIA - POTENCIA ALTA - CASA',
+        '[OP] REINCIDENCIA - TROCA DE EQUIPAMENTOS - CASA',
+        '[OP] REINCIDENCIA - FIBRA ROMPIDA[CASA]',
+        '[OP] REINCIDENCIA - POTENCIA ALTA - APARTAMENTO'
+    ]
+    padrao_sup_ativ = [
+        'SUPORTE INTERVALO  16 A 30 DIAS APOS ATIVAÇÃO',
+        'SUPORTE APOS 24 HORAS'
+    ]
+    
+    try:
+        assuntos_gart = list(RegraAssunto.objects.filter(tipo_regra='GARANTIA_30D', ativo=True).values_list('assunto', flat=True))
+        if not assuntos_gart:
+            assuntos_gart = padrao_garantia
+            
+        assuntos_sup = list(RegraAssunto.objects.filter(tipo_regra='SUPORTE_ATIVACAO', ativo=True).values_list('assunto', flat=True))
+        if not assuntos_sup:
+            assuntos_sup = padrao_sup_ativ
+            
+        return assuntos_gart, assuntos_sup
+    except Exception:
+        return padrao_garantia, padrao_sup_ativ
+
+def sincronizar_assuntos_disponiveis():
+    """
+    Sincroniza todos os assuntos de OrdemServico que ainda não estão em RegraAssunto.
+    Garante que os padrões de Garantia 30D e Suporte Ativação fiquem pré-mapeados e ativos.
+    """
+    from .models import RegraAssunto, OrdemServico
+    
+    padrao_garantia = [
+        '[OP] REINCIDENCIA - SEM ACESSO',
+        '[OP] REINCIDENCIA - INTERNET LENTA - CASA',
+        '[OP] REINCIDENCIA - SEM ACESSO - APARTAMENTO',
+        '[OP] REINCIDENCIA - POTENCIA ALTA - CASA',
+        '[OP] REINCIDENCIA - TROCA DE EQUIPAMENTOS - CASA',
+        '[OP] REINCIDENCIA - FIBRA ROMPIDA[CASA]',
+        '[OP] REINCIDENCIA - POTENCIA ALTA - APARTAMENTO'
+    ]
+    padrao_sup_ativ = [
+        'SUPORTE INTERVALO  16 A 30 DIAS APOS ATIVAÇÃO',
+        'SUPORTE APOS 24 HORAS'
+    ]
+
+    # Pre-criar padrões de garantia
+    for ass in padrao_garantia:
+        RegraAssunto.objects.get_or_create(
+            assunto=ass,
+            defaults={'tipo_regra': 'GARANTIA_30D', 'ativo': True}
+        )
+
+    # Pre-criar padrões de suporte ativação
+    for ass in padrao_sup_ativ:
+        RegraAssunto.objects.get_or_create(
+            assunto=ass,
+            defaults={'tipo_regra': 'SUPORTE_ATIVACAO', 'ativo': True}
+        )
+
+    # Identificar todos os outros assuntos existentes no banco de OS
+    assuntos_existentes = set(RegraAssunto.objects.values_list('assunto', flat=True))
+    novos_assuntos = OrdemServico.objects.exclude(assunto__isnull=True).exclude(assunto='').values_list('assunto', flat=True).distinct()
+    
+    a_criar = []
+    for ass in novos_assuntos:
+        ass_clean = (ass or '').strip()
+        if ass_clean and ass_clean not in assuntos_existentes:
+            assuntos_existentes.add(ass_clean)
+            a_criar.append(RegraAssunto(assunto=ass_clean, tipo_regra='OUTROS', ativo=False))
+            
+    if a_criar:
+        RegraAssunto.objects.bulk_create(a_criar, ignore_conflicts=True)
+

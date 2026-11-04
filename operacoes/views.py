@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
-from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal
-from .utils import calcular_dias_uteis, garantir_alocacao_mes
+from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal, RegraAssunto
+from .utils import calcular_dias_uteis, garantir_alocacao_mes, get_assuntos_regras, sincronizar_assuntos_disponiveis
 from django.db.models import Count, Q, Q
 from django.contrib import messages
 from collections import Counter
@@ -142,6 +142,9 @@ def dashboard_operacoes(request):
     # Busca todos os técnicos que têm supervisor definido
     alocacoes = AlocacaoMensal.objects.filter(mes=mes_atual, ano=ano_atual, colaborador__tipo='TECNICO').exclude(supervisor__isnull=True).select_related('colaborador', 'supervisor')
 
+    # De-Para dinâmico de assuntos de Garantia 30D e Suporte Ativação
+    assuntos_garantia, assuntos_sup_ativacao = get_assuntos_regras()
+
     def calc_ating_reinc(real_pct, meta_val, is_ativacao=False):
         if not meta_val: return 0.0
         if real_pct <= 0:
@@ -172,18 +175,7 @@ def dashboard_operacoes(request):
             }
 
         # Calcula métricas DO TÉCNICO
-
         ASSUNTOS_AUDITORIA = ['AUDITORIA', '[OP] FIELD AUDIT']
-
-        ASSUNTOS_GARANTIA = [
-            '[OP] REINCIDENCIA - SEM ACESSO',
-            '[OP] REINCIDENCIA - INTERNET LENTA - CASA',
-            '[OP] REINCIDENCIA - SEM ACESSO - APARTAMENTO',
-            '[OP] REINCIDENCIA - POTENCIA ALTA - CASA',
-            '[OP] REINCIDENCIA - TROCA DE EQUIPAMENTOS - CASA',
-            '[OP] REINCIDENCIA - FIBRA ROMPIDA[CASA]',
-            '[OP] REINCIDENCIA - POTENCIA ALTA - APARTAMENTO'
-        ]
 
         # Serviços executados por este técnico
         t_servicos = os_mes.filter(
@@ -205,22 +197,18 @@ def dashboard_operacoes(request):
                 colaborador=tecnico
             ).exclude(assunto__icontains='[OP] FIELD AUDIT').count()
         else:
-            # Ativação: Suporte (Reincidência)
-            ASSUNTOS_SUPORTE_ATIVACAO = [
-                'SUPORTE INTERVALO  16 A 30 DIAS APOS ATIVAÇÃO',
-                'SUPORTE APOS 24 HORAS'
-            ]
+            # Ativação: Suporte (Reincidência) configurável no De-Para
             q_sup_ativ = Q()
-            for ass_sup in ASSUNTOS_SUPORTE_ATIVACAO:
+            for ass_sup in assuntos_sup_ativacao:
                 q_sup_ativ |= Q(assunto__icontains=ass_sup.strip())
             t_reinc = os_mes.filter(
                 q_sup_ativ,
                 colaborador=tecnico
             ).count()
         
-        # Garantia 30D deste técnico
+        # Garantia 30D deste técnico configurável no De-Para
         q_garantia = Q()
-        for ass_gart in ASSUNTOS_GARANTIA:
+        for ass_gart in assuntos_garantia:
             q_garantia |= Q(assunto__icontains=ass_gart.strip())
             
         t_gart = os_mes_ant.filter(
@@ -484,7 +472,10 @@ def dashboard_operacoes(request):
             t_total = t_serv + t_sup
             
             t_reinc = os_mes.filter(nome_setor__iexact='RETRABALHO', colaborador=tec).exclude(assunto__icontains='[OP] FIELD AUDIT').count()
-            t_gart = os_mes.filter(colaborador=tec, assunto__in=ASSUNTOS_GARANTIA).count()
+            q_garantia_desc = Q()
+            for ass_gart in assuntos_garantia:
+                q_garantia_desc |= Q(assunto__icontains=ass_gart.strip())
+            t_gart = os_mes.filter(q_garantia_desc, colaborador=tec).count()
             t_aud = aud_por_tec.get(tec.id, 0)
             t_rep = rep_por_tec.get(tec.id, 0)
             
@@ -1020,6 +1011,7 @@ def exportar_base(request):
             
     # Criar a resposta CSV
     response = HttpResponse(content_type='text/csv')
+    assuntos_garantia, assuntos_sup_ativacao = get_assuntos_regras()
     
     if tipo == 'servicos':
         response['Content-Disposition'] = f'attachment; filename="Base_Servicos_Suporte_{mes_atual:02d}_{ano_atual}.csv"'
@@ -1032,7 +1024,7 @@ def exportar_base(request):
         
         for os_obj in oss:
             assunto_norm = _norm_assunto(os_obj.assunto) if os_obj.assunto else ''
-            c_gart = 'SIM' if '[OP] REINCIDENCIA' in assunto_norm else 'NÃO'
+            c_gart = 'SIM' if any(a.upper() in assunto_norm for a in assuntos_garantia) else 'NÃO'
             
             writer.writerow([
                 os_obj.id_ixc, os_obj.protocolo, 
@@ -1051,12 +1043,8 @@ def exportar_base(request):
             'Setor Original', 'Assunto', 'Técnico Original'
         ])
         
-        ASSUNTOS_SUPORTE_ATIVACAO = [
-            'SUPORTE INTERVALO  16 A 30 DIAS APOS ATIVAÇÃO',
-            'SUPORTE APOS 24 HORAS'
-        ]
         q_sup_ativ = Q()
-        for ass_sup in ASSUNTOS_SUPORTE_ATIVACAO:
+        for ass_sup in assuntos_sup_ativacao:
             q_sup_ativ |= Q(assunto__icontains=ass_sup.strip())
             
         q_geral = Q(nome_setor__iexact='SERVIÇO') | (Q(nome_setor__iexact='SUPORTE') & q_sup_ativ)
@@ -1144,4 +1132,111 @@ def settings_users_view(request):
     """Redireciona para as configurações operacionais já que os usuários são geridos centralizadamente pelo Hub."""
     messages.info(request, 'O gerenciamento de usuários agora é centralizado no Hub The Fiber.')
     return redirect('configuracoes')
+
+# ==========================================
+# DE-PARA DE ASSUNTOS (GARANTIA 30D / SUPORTE ATIVAÇÃO)
+# ==========================================
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def configuracoes_assuntos(request):
+    from .models import RegraAssunto
+    from .utils import sincronizar_assuntos_disponiveis
+
+    # Sincroniza novos assuntos detectados no banco de OS
+    sincronizar_assuntos_disponiveis()
+
+    tipo_filtro = request.GET.get('tipo', 'TODOS').upper()
+    busca = request.GET.get('q', '').strip()
+
+    qs = RegraAssunto.objects.all().order_by('tipo_regra', 'assunto')
+
+    if tipo_filtro == 'GARANTIA':
+        qs = qs.filter(tipo_regra='GARANTIA_30D')
+    elif tipo_filtro == 'SUPORTE':
+        qs = qs.filter(tipo_regra='SUPORTE_ATIVACAO')
+    elif tipo_filtro == 'OUTROS':
+        qs = qs.filter(tipo_regra='OUTROS')
+
+    if busca:
+        qs = qs.filter(assunto__icontains=busca)
+
+    total_geral = RegraAssunto.objects.count()
+    total_garantia = RegraAssunto.objects.filter(tipo_regra='GARANTIA_30D', ativo=True).count()
+    total_suporte = RegraAssunto.objects.filter(tipo_regra='SUPORTE_ATIVACAO', ativo=True).count()
+    total_outros = RegraAssunto.objects.filter(tipo_regra='OUTROS').count()
+
+    context = {
+        'regras': qs,
+        'tipo_filtro': tipo_filtro,
+        'busca': busca,
+        'tipos_choices': RegraAssunto.TIPO_CHOICES,
+        'total_geral': total_geral,
+        'total_garantia': total_garantia,
+        'total_suporte': total_suporte,
+        'total_outros': total_outros,
+    }
+    return render(request, 'operacoes/configuracoes_assuntos.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def salvar_regra_assunto(request):
+    from .models import RegraAssunto
+    from django.http import JsonResponse
+
+    if request.method == 'POST':
+        regra_id = request.POST.get('regra_id')
+        tipo_regra = request.POST.get('tipo_regra')
+        # Checkbox ou flag via AJAX
+        ativo = request.POST.get('ativo') in ['true', 'True', '1', 'on']
+
+        if regra_id:
+            regra = get_object_or_404(RegraAssunto, id=regra_id)
+            if tipo_regra:
+                regra.tipo_regra = tipo_regra
+            regra.ativo = ativo
+            regra.save()
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax'):
+                return JsonResponse({'status': 'ok', 'id': regra.id, 'ativo': regra.ativo, 'tipo_regra': regra.tipo_regra})
+
+            messages.success(request, f"Regra para '{regra.assunto}' atualizada com sucesso!")
+
+    return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_assuntos')
+
+
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def adicionar_regra_assunto(request):
+    from .models import RegraAssunto
+
+    if request.method == 'POST':
+        assunto = request.POST.get('assunto', '').strip()
+        tipo_regra = request.POST.get('tipo_regra', 'GARANTIA_30D')
+        ativo = request.POST.get('ativo') == 'on'
+
+        if assunto:
+            regra, created = RegraAssunto.objects.get_or_create(
+                assunto=assunto,
+                defaults={'tipo_regra': tipo_regra, 'ativo': ativo}
+            )
+            if not created:
+                regra.tipo_regra = tipo_regra
+                regra.ativo = ativo
+                regra.save()
+                messages.info(request, f"Assunto '{assunto}' já existia e foi atualizado.")
+            else:
+                messages.success(request, f"Assunto '{assunto}' cadastrado com sucesso!")
+
+    return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_assuntos')
+
+
+@user_passes_test(lambda u: u.is_staff, login_url='/')
+def excluir_regra_assunto(request, id):
+    from .models import RegraAssunto
+
+    regra = get_object_or_404(RegraAssunto, id=id)
+    regra.tipo_regra = 'OUTROS'
+    regra.ativo = False
+    regra.save()
+    messages.success(request, f"Assunto '{regra.assunto}' desmarcado e movido para Outros/Desconsiderar.")
+    return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_assuntos')
+
 

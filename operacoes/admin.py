@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Colaborador, Cliente, OrdemServico, Auditoria, Expurgo, Feriado, MetaOperacional, AlocacaoMensal
+from .models import Colaborador, Cliente, OrdemServico, Auditoria, Expurgo, Feriado, MetaOperacional, AlocacaoMensal, RegraAssunto
 
 @admin.register(Colaborador)
 class ColaboradorAdmin(admin.ModelAdmin):
@@ -58,3 +58,10 @@ class MetaOperacionalAdmin(admin.ModelAdmin):
         'manutencao_meta_volume', 'manutencao_meta_retrabalho', 'manutencao_meta_garantia_30d', 'manutencao_meta_auditoria'
     )
     list_filter = ('ano', 'mes')
+
+@admin.register(RegraAssunto)
+class RegraAssuntoAdmin(admin.ModelAdmin):
+    list_display = ('assunto', 'tipo_regra', 'ativo', 'atualizado_em')
+    list_filter = ('tipo_regra', 'ativo')
+    search_fields = ('assunto',)
+

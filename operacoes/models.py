@@ -197,3 +197,25 @@ class MetaOperacional(models.Model):
         return f"Metas de {self.get_mes_display()}/{self.ano}"
 
 
+class RegraAssunto(models.Model):
+    TIPO_CHOICES = [
+        ('GARANTIA_30D', 'Garantia 30D (Manutenção)'),
+        ('SUPORTE_ATIVACAO', 'Suporte / Reincidência (Ativação)'),
+        ('OUTROS', 'Outros / Desconsiderar'),
+    ]
+    assunto = models.CharField(max_length=255, unique=True, verbose_name="Assunto da OS")
+    tipo_regra = models.CharField(max_length=50, choices=TIPO_CHOICES, default='OUTROS', verbose_name="Tipo de Regra")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo?")
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.assunto} ({self.get_tipo_regra_display()})"
+
+    class Meta:
+        verbose_name = "De-Para de Assunto"
+        verbose_name_plural = "De-Para de Assuntos"
+        ordering = ['tipo_regra', 'assunto']
+
+
+
