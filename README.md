@@ -218,6 +218,10 @@ docker exec -it operacoes-telecom-web-1 python manage.py shell
 Sempre que você ou outro desenvolvedor fizer alterações no código, siga rigorosamente esta sequência de comandos:
 
 ### 1º Passo: Testar e commitar na pasta DEV:
+A The Fiber trabalha com dois repositórios remotos configurados:
+- **`origin`**: Repositório interno (`devthefiber/operacoes-telecom`)
+- **`geral`**: Repositório central (`thefiber-go/dash_operacao`)
+
 ```bash
 cd /home/desenv/projetos/operacoes-telecom_dev
 
@@ -228,8 +232,11 @@ git status
 git add .
 git commit -m "descricao clara da mudanca realizada"
 
-# Envie as alterações para o repositório remoto (GitHub)
+# Envie as alterações para o repositório origin (devthefiber)
 git push origin main
+
+# Envie as alterações para o repositório geral (thefiber-go/dash_operacao)
+git push geral main
 ```
 
 ### 2º Passo: Atualizar a Produção (PROD):
@@ -290,4 +297,5 @@ docker compose up -d
 
 ## Contatos e Suporte
 - **Equipe de Desenvolvimento The Fiber**
-- **Repositório Oficial**: `https://github.com/devthefiber/operacoes-telecom.git`
+- **Repositório Central**: `https://github.com/thefiber-go/dash_operacao.git`
+- **Repositório de Produção**: `https://github.com/devthefiber/operacoes-telecom.git`
