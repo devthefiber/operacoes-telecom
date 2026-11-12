@@ -69,19 +69,14 @@ def login_portal_view(request):
             }
         )
 
-        # 4. Sincronização do Nível de Permissão e Perfil
+        # 4. Sincronização do Nível de Permissão e Perfil (100% controlado pelo Hub)
         fields_to_update = []
-        if user.is_superuser:
-            if not user.is_staff:
-                user.is_staff = True
-                fields_to_update.append('is_staff')
-        else:
-            if user.is_staff != is_admin:
-                user.is_staff = is_admin
-                fields_to_update.append('is_staff')
-            if user.is_superuser != is_admin:
-                user.is_superuser = is_admin
-                fields_to_update.append('is_superuser')
+        if user.is_staff != is_admin:
+            user.is_staff = is_admin
+            fields_to_update.append('is_staff')
+        if user.is_superuser != is_admin:
+            user.is_superuser = is_admin
+            fields_to_update.append('is_superuser')
 
         if not user.is_active:
             user.is_active = True
