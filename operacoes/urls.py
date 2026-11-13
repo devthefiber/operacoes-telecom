@@ -27,4 +27,7 @@ urlpatterns = [
     
     # Gestão de Usuários (Centralizado no Hub The Fiber)
     path('config/usuarios/', views.settings_users_view, name='settings_users'),
+
+    # API Interna (Somente Leitura) para integração com Estoque
+    path('api/equipes/tecnicos-supervisores/', views.api_tecnicos_supervisores, name='api_tecnicos_supervisores'),
 ]

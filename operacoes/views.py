@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal, RegraAssunto, BaseCliente
 from .utils import calcular_dias_uteis, garantir_alocacao_mes, get_assuntos_regras, sincronizar_assuntos_disponiveis, get_base_cliente, calcular_tt_base, garantir_base_clientes
 from django.db.models import Count, Q, Q
@@ -1310,6 +1311,131 @@ def salvar_base_cliente(request):
             messages.success(request, f"Base de {obj.get_mes_display()}/{obj.ano} atualizada para {obj.base} clientes.")
 
     return redirect(request.META.get('HTTP_REFERER') or 'configuracoes_base_cliente')
+
+
+@require_GET
+def api_tecnicos_supervisores(request):
+    """
+    Endpoint JSON somente leitura para integração interna (ex: dash_estoque).
+    Retorna a lista de técnicos/colaboradores e seus supervisores na alocação
+    do mês corrente (com fallback para a versão mensal mais recente caso o mês
+    corrente ainda não tenha sido populado).
+    Autenticação: sessão autenticada OU Bearer JWT assinado com PORTAL_JWT_SECRET
+    e claim scope='operacoes_equipes'.
+    """
+    import datetime
+    import jwt
+    from django.conf import settings
+    from django.http import JsonResponse
+
+    autorizado = bool(request.user and request.user.is_authenticated)
+    if not autorizado:
+        auth_header = request.headers.get('Authorization', '').strip()
+        if auth_header.lower().startswith('bearer '):
+            token = auth_header[7:].strip()
+            try:
+                payload = jwt.decode(
+                    token,
+                    settings.PORTAL_JWT_SECRET,
+                    algorithms=['HS256'],
+                )
+                if payload.get('scope') == 'operacoes_equipes':
+                    autorizado = True
+            except Exception:
+                autorizado = False
+
+    if not autorizado:
+        return JsonResponse({'detail': 'Não autorizado.'}, status=401)
+
+    hoje = datetime.date.today()
+    try:
+        mes_req = int(request.GET.get('mes', hoje.month))
+        ano_req = int(request.GET.get('ano', hoje.year))
+        if not (1 <= mes_req <= 12):
+            raise ValueError('mes inválido')
+    except (ValueError, TypeError):
+        mes_req, ano_req = hoje.month, hoje.year
+
+    mes_ref, ano_ref = mes_req, ano_req
+    if not AlocacaoMensal.objects.filter(mes=mes_ref, ano=ano_ref).exists():
+        mais_recente = (
+            AlocacaoMensal.objects.order_by('-ano', '-mes')
+            .values('ano', 'mes')
+            .first()
+        )
+        if mais_recente:
+            mes_ref = mais_recente['mes']
+            ano_ref = mais_recente['ano']
+
+    alocacoes = (
+        AlocacaoMensal.objects.filter(
+            mes=mes_ref,
+            ano=ano_ref,
+            colaborador__ativo=True,
+        )
+        .select_related('colaborador', 'colaborador__cargo', 'supervisor', 'cargo')
+        .order_by('colaborador__nome')
+    )
+
+    colaboradores = []
+    ids_incluidos = set()
+    for aloc in alocacoes:
+        col = aloc.colaborador
+        sup = aloc.supervisor
+        cargo_obj = aloc.cargo or col.cargo
+        colaboradores.append({
+            'id': col.id,
+            'nome': col.nome,
+            'tipo': col.tipo,
+            'setor': aloc.setor or col.setor or '',
+            'contratacao': aloc.contratacao or col.contratacao or '',
+            'cargo': cargo_obj.nome if cargo_obj else '',
+            'supervisor_id': sup.id if sup else None,
+            'supervisor_nome': sup.nome if sup else '',
+            'supervisor_setor': (sup.setor or '') if sup else '',
+        })
+        ids_incluidos.add(col.id)
+
+    # Inclui técnicos ativos que ainda não tenham linha na alocação do mês (usando supervisor base se houver)
+    restantes = (
+        Colaborador.objects.filter(ativo=True, tipo='TECNICO')
+        .exclude(id__in=ids_incluidos)
+        .select_related('supervisor', 'cargo')
+        .order_by('nome')
+    )
+    for col in restantes:
+        sup = col.supervisor
+        colaboradores.append({
+            'id': col.id,
+            'nome': col.nome,
+            'tipo': col.tipo,
+            'setor': col.setor or '',
+            'contratacao': col.contratacao or '',
+            'cargo': col.cargo.nome if col.cargo else '',
+            'supervisor_id': sup.id if sup else None,
+            'supervisor_nome': sup.nome if sup else '',
+            'supervisor_setor': (sup.setor or '') if sup else '',
+        })
+
+    supervisores = [
+        {
+            'id': s.id,
+            'nome': s.nome,
+            'setor': s.setor or '',
+        }
+        for s in Colaborador.objects.filter(ativo=True, tipo='SUPERVISOR').order_by('nome')
+    ]
+
+    return JsonResponse({
+        'status': 'ok',
+        'mes_referencia': mes_ref,
+        'ano_referencia': ano_ref,
+        'mes_label': f'{mes_ref:02d}/{ano_ref}',
+        'is_mes_corrente': (mes_ref == mes_req and ano_ref == ano_req),
+        'supervisores': supervisores,
+        'colaboradores': colaboradores,
+    })
+
 
 
 
