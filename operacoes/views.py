@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 from .models import OrdemServico, MetaOperacional, Colaborador, Cargo, Feriado, AlocacaoMensal, RegraAssunto, BaseCliente
@@ -12,13 +13,26 @@ from collections import Counter
 ASSUNTO_AUD_REPROVADA = 'CONTROLE DE QUALIDADE  EM CAMPO REPROVADA'
 
 
+def _montar_anos_disponiveis(*anos_obrigatorios, anos_iteraveis=()):
+    """Combina anos consultados no banco com anos obrigatórios em ordem decrescente."""
+    anos = set()
+    for iteravel in anos_iteraveis:
+        anos.update(a for a in iteravel if a)
+    for ano in anos_obrigatorios:
+        if ano:
+            anos.add(ano)
+    return sorted(anos, reverse=True)
+
+
 @login_required
 def dashboard_operacoes(request):
-    agora = timezone.now()
+    agora = timezone.localtime()
     
     try:
         mes_atual = int(request.GET.get('mes', agora.month))
         ano_atual = int(request.GET.get('ano', agora.year))
+        if not (1 <= mes_atual <= 12):
+            raise ValueError('mes inválido')
     except (ValueError, TypeError):
         mes_atual = agora.month
         ano_atual = agora.year
@@ -26,10 +40,15 @@ def dashboard_operacoes(request):
     # Se o usuário NÃO passou o filtro na URL e não houver dados neste mês, recua automaticamente
     if not request.GET.get('mes') and not request.GET.get('ano'):
         if not OrdemServico.objects.filter(data_fechamento__year=ano_atual, data_fechamento__month=mes_atual).exists():
-            ultima_os = OrdemServico.objects.order_by('-data_fechamento').first()
+            ultima_os = (
+                OrdemServico.objects.filter(data_fechamento__isnull=False)
+                .order_by('-data_fechamento')
+                .first()
+            )
             if ultima_os and ultima_os.data_fechamento:
-                mes_atual = ultima_os.data_fechamento.month
-                ano_atual = ultima_os.data_fechamento.year
+                dt_ultima = timezone.localtime(ultima_os.data_fechamento)
+                mes_atual = dt_ultima.month
+                ano_atual = dt_ultima.year
     
     # Garante alocação do mês (se virar o mês, replica do anterior automaticamente)
     garantir_alocacao_mes(mes_atual, ano_atual)
@@ -551,9 +570,16 @@ def dashboard_operacoes(request):
         base_clientes=base_cliente_atual
     )
 
+    anos_os = (
+        d.year
+        for d in OrdemServico.objects.filter(data_fechamento__isnull=False).dates('data_fechamento', 'year')
+    )
+    anos_disponiveis = _montar_anos_disponiveis(agora.year, ano_atual, anos_iteraveis=(anos_os,))
+
     context = {
         'mes_atual': mes_atual,
         'ano_atual': ano_atual,
+        'anos_disponiveis': anos_disponiveis,
         'dias_uteis': dias_uteis,
         'meta': meta,
         'total_servicos': total_servicos,
@@ -736,17 +762,17 @@ def excluir_cargo(request, id):
 
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def configuracoes_metas(request):
+    import datetime
     metas = MetaOperacional.objects.all().order_by('-ano', '-mes')
     
     # Calcular dias uteis dinâmicos para visualização
     for m in metas:
         m.dias_uteis_calculado = calcular_dias_uteis(m.ano, m.mes)['total_du']
 
-    
-
     context = {
         'metas': metas,
-        'meses': MetaOperacional.MESES
+        'meses': MetaOperacional.MESES,
+        'ano_atual': datetime.date.today().year,
     }
     return render(request, 'operacoes/configuracoes_metas.html', context)
 
@@ -758,16 +784,18 @@ def configuracoes_feriados(request):
     ano_selecionado = request.GET.get('ano', str(ano_atual))
     try:
         ano_selecionado = int(ano_selecionado)
-    except:
+    except (ValueError, TypeError):
         ano_selecionado = ano_atual
         
     feriados = Feriado.objects.filter(data__year=ano_selecionado).order_by('data')
     
-    anos_disponiveis = Feriado.objects.dates('data', 'year').values_list('data__year', flat=True).distinct().order_by('data__year')
-    if not anos_disponiveis:
-        anos_disponiveis = [ano_atual]
-        
-    
+    anos_feriados = (d.year for d in Feriado.objects.dates('data', 'year'))
+    anos_disponiveis = _montar_anos_disponiveis(
+        ano_atual,
+        ano_atual + 1,
+        ano_selecionado,
+        anos_iteraveis=(anos_feriados,),
+    )
 
     context = {
         'feriados': feriados,
@@ -829,10 +857,13 @@ def salvar_meta(request):
 
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def salvar_feriado(request):
+    ano_redirect = None
     if request.method == 'POST':
         feriado_id = request.POST.get('feriado_id')
         data = request.POST.get('data')
         descricao = request.POST.get('descricao')
+        if data and len(str(data)) >= 4 and str(data)[:4].isdigit():
+            ano_redirect = int(str(data)[:4])
         if feriado_id:
             f = get_object_or_404(Feriado, id=feriado_id)
             f.data = data
@@ -842,13 +873,18 @@ def salvar_feriado(request):
         else:
             Feriado.objects.create(data=data, descricao=descricao)
             messages.success(request, 'Feriado cadastrado com sucesso!')
+    if ano_redirect:
+        return redirect(f"{reverse('configuracoes_feriados')}?ano={ano_redirect}")
     return redirect('configuracoes_feriados')
 
 @user_passes_test(lambda u: u.is_staff, login_url='/')
 def excluir_feriado(request, id):
     f = get_object_or_404(Feriado, id=id)
+    ano_redirect = f.data.year if f.data else None
     f.delete()
     messages.success(request, f'Feriado {f.descricao} excluído com sucesso.')
+    if ano_redirect:
+        return redirect(f"{reverse('configuracoes_feriados')}?ano={ano_redirect}")
     return redirect('configuracoes_feriados')
 
 from .models import Expurgo
@@ -1273,10 +1309,13 @@ def configuracoes_base_cliente(request):
     bases = BaseCliente.objects.filter(ano=ano_selecionado).order_by('mes')
 
     # Anos disponíveis para filtro
-    anos_disponiveis = list(BaseCliente.objects.values_list('ano', flat=True).distinct().order_by('-ano'))
-    if ano_selecionado not in anos_disponiveis:
-        anos_disponiveis.append(ano_selecionado)
-        anos_disponiveis.sort(reverse=True)
+    anos_base = BaseCliente.objects.values_list('ano', flat=True).distinct()
+    anos_disponiveis = _montar_anos_disponiveis(
+        ano_atual,
+        ano_atual + 1,
+        ano_selecionado,
+        anos_iteraveis=(anos_base,),
+    )
 
     context = {
         'bases': bases,

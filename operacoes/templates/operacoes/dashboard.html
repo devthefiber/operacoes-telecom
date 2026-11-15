@@ -550,23 +550,27 @@
     <div style="display: flex; align-items: stretch; justify-content: space-between; margin-bottom: 0.5rem; gap: 1rem; flex-wrap: wrap;">
         
         <!-- Bloco 1: Filtros e Exportação -->
-        <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; min-width: 220px;">
-            <form method="GET" style="margin: 0;">
-                <select name="mes" class="month-selector" onchange="this.form.submit()" style="padding: 0.3rem 1rem; font-size: 0.85rem; height: 100%; border-radius: 6px;">
-                    <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro {{ano_atual}}</option>
-                    <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro {{ano_atual}}</option>
-                    <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março {{ano_atual}}</option>
-                    <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril {{ano_atual}}</option>
-                    <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio {{ano_atual}}</option>
-                    <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho {{ano_atual}}</option>
-                    <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho {{ano_atual}}</option>
-                    <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto {{ano_atual}}</option>
-                    <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro {{ano_atual}}</option>
-                    <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro {{ano_atual}}</option>
-                    <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro {{ano_atual}}</option>
-                    <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro {{ano_atual}}</option>
+        <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; min-width: 240px;">
+            <form method="GET" style="margin: 0; display: flex; gap: 0.4rem; align-items: stretch;">
+                <select name="mes" aria-label="Mês" class="month-selector" onchange="this.form.submit()" style="flex: 1; padding: 0.3rem 0.75rem; font-size: 0.85rem; height: 100%; border-radius: 6px;">
+                    <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
+                    <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
+                    <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
+                    <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril</option>
+                    <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio</option>
+                    <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho</option>
+                    <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho</option>
+                    <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto</option>
+                    <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro</option>
+                    <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+                    <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+                    <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
                 </select>
-                <input type="hidden" name="ano" value="{{ano_atual}}">
+                <select name="ano" aria-label="Ano" class="month-selector" onchange="this.form.submit()" style="padding: 0.3rem 0.65rem; font-size: 0.85rem; height: 100%; border-radius: 6px;">
+                    {% for a in anos_disponiveis %}
+                        <option value="{{ a }}" {% if ano_atual == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
             </form>
             <div style="position: relative;">
                 <button onclick="var dropdown = document.getElementById('exportDropdown'); dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';" 
